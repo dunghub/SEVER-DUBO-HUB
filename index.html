@@ -249,7 +249,7 @@
         <div id="loginScreen">
             <h2>🔒 ENTER SERVER PASSWORD</h2>
             <div class="login-box">
-                <input type="password" id="passwordInput" placeholder="Enter password (e.g. DUBO_ADMIN_VIP_2026)...">
+                <input type="password" id="passwordInput" placeholder="Enter password (e.g. DUBO-HUB-04012012)...">
                 <button class="btn-primary" onclick="checkPassword()">Access</button>
             </div>
             <div class="error-msg" id="errorMsg">Incorrect password! Access denied.</div>
@@ -307,14 +307,12 @@
     </div>
 
     <script>
-        // Mật khẩu kết nối admin với server (phải khớp với ADMIN_SECRET trong code Node.js)
         let adminSecretToken = "";
 
         async function checkPassword() {
             let inputPass = document.getElementById("passwordInput").value;
             let errorMsg = document.getElementById("errorMsg");
             
-            // Thử test gọi một request admin tới server để xác thực mật khẩu
             try {
                 let res = await fetch('/api/admin/create-premium', {
                     method: 'POST',
@@ -323,7 +321,7 @@
                 let data = await res.json();
 
                 if (res.status === 200 || data.status === 'success') {
-                    adminSecretToken = inputPass; // Lưu token để dùng cho các hành động sau
+                    adminSecretToken = inputPass;
                     document.getElementById("loginScreen").style.display = "none";
                     document.getElementById("mainDashboard").style.display = "block";
                     startTypingEffect();
@@ -362,7 +360,6 @@
             type();
         }
 
-        // Tạo key gọi trực tiếp lên server Vercel
         async function generateRandomKeyFormServer() {
             try {
                 let res = await fetch('/api/admin/create-premium', {
@@ -391,7 +388,6 @@
                 resultBox.innerHTML = "<span style='color: #ef4444;'>Vui lòng nhập mã key cần tìm!</span>";
                 return;
             }
-            // Bạn có thể mở rộng API trên server để tìm kiếm danh sách key nếu muốn
             resultBox.innerHTML = `<span style='color: #10b981;'>Đang tra cứu mã: <b>${keyInput}</b> trực tiếp trên cơ sở dữ liệu server...</span>`;
         }
 
