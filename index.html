@@ -1,4 +1,103 @@
-<!DOCTYPE html>
+const express = require('express');
+const app = express();
+
+app.use(express.json());
+
+// Bộ nhớ lưu trữ Key tạm thời trên Serverless (Dùng Map)
+const premiumKeys = new Map();
+const timeKeys = new Map();
+
+// --- 1. API TẠO KEY PREMIUM ---
+app.post('/api/admin/create-premium', (req, res) => {
+    try {
+        const { discordId } = req.body;
+        if (!discordId) return res.json({ status: 'error', message: 'Thiếu Discord ID!' });
+        
+        const randomKey = 'DUBO-PREMIUM-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+        premiumKeys.set(randomKey, { discordId, hwid: 'None', disabled: false, extra: 'Lifetime' });
+        
+        res.json({ status: 'success', key: randomKey });
+    } catch (e) {
+        res.json({ status: 'error', message: e.message });
+    }
+});
+
+// --- 2. API TẠO KEY THỜI GIAN ---
+app.post('/api/admin/create-time', (req, res) => {
+    try {
+        const { discordId, duration } = req.body;
+        if (!discordId || !duration) return res.json({ status: 'error', message: 'Thiếu thông tin!' });
+        
+        const randomKey = 'DUBO-TIME-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+        timeKeys.set(randomKey, { discordId, hwid: 'None', disabled: false, extra: duration });
+        
+        res.json({ status: 'success', key: randomKey });
+    } catch (e) {
+        res.json({ status: 'error', message: e.message });
+    }
+});
+
+// --- 3. API TRA CỨU KEY THEO DISCORD ID ---
+app.post('/api/admin/search-keys', (req, res) => {
+    try {
+        const { discordId } = req.body;
+        if (!discordId) return res.json({ status: 'error', message: 'Thiếu Discord ID!' });
+        
+        let foundKeys = [];
+
+        for (let [key, data] of premiumKeys.entries()) {
+            if (data.discordId.trim() === discordId.trim()) {
+                foundKeys.push({ key, type: 'PREMIUM', ...data });
+            }
+        }
+        for (let [key, data] of timeKeys.entries()) {
+            if (data.discordId.trim() === discordId.trim()) {
+                foundKeys.push({ key, type: 'TIME', ...data });
+            }
+        }
+
+        res.json({ status: 'success', keys: foundKeys });
+    } catch (e) {
+        res.json({ status: 'error', message: e.message });
+    }
+});
+
+// --- 4. API QUẢN LÝ KEY (DELETE / RESET / NEUTRALIZE) ---
+app.post('/api/admin/manage-key', (req, res) => {
+    try {
+        const { key, action, confirmText } = req.body;
+        let targetMap = premiumKeys.has(key) ? premiumKeys : (timeKeys.has(key) ? timeKeys : null);
+
+        if (!targetMap) return res.json({ status: 'error', message: 'Không tìm thấy key trên server!' });
+
+        let data = targetMap.get(key);
+
+        if (action === 'delete') {
+            if (confirmText !== 'DELETE KEY') return res.json({ status: 'error', message: 'Sai chữ xác nhận!' });
+            targetMap.delete(key);
+        } else if (action === 'reset_hwid') {
+            if (confirmText !== 'RESET HWID') return res.json({ status: 'error', message: 'Sai chữ xác nhận!' });
+            data.hwid = 'None';
+        } else if (action === 'neutralize') {
+            let reqText = data.disabled ? 'TO REMOVE' : 'TO NEUTRALIZE';
+            if (confirmText !== reqText) return res.json({ status: 'error', message: 'Sai chữ xác nhận!' });
+            
+            if (data.disabled) {
+                targetMap.delete(key);
+            } else {
+                data.disabled = true;
+            }
+        }
+
+        res.json({ status: 'success' });
+    } catch (e) {
+        res.json({ status: 'error', message: e.message });
+    }
+});
+
+// --- 5. GIAO DIỆN ADMIN PANEL (TRẢ VỀ KHI TRUY CẬP TRANG CHỦ) ---
+app.get('*', (req, res) => {
+    res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -206,6 +305,7 @@
             <span class="aura-text" id="typedText"></span>
         </div>
 
+        <!-- TAB TÌM KIẾM VÀ QUẢN LÝ -->
         <div id="tabKey" class="section active-tab">
             <h3>TRA CỨU KEY THEO DISCORD ID</h3>
             <div class="control-row">
@@ -217,6 +317,7 @@
             </div>
         </div>
 
+        <!-- TAB TẠO KEY PREMIUM -->
         <div id="tabCreatePremium" class="section">
             <h3>➕ TẠO KEY PREMIUM MỚI</h3>
             <div class="control-row">
@@ -229,6 +330,7 @@
             <div class="success-alert" id="createSuccessAlertPrem">✅ ĐÃ TẠO VÀ ĐƯA THẲNG VÀO KHO PREMIUM!</div>
         </div>
 
+        <!-- TAB TẠO KEY THỜI GIAN -->
         <div id="tabCreateTime" class="section">
             <h3>⏳ TẠO KEY THỜI GIAN MỚI</h3>
             <div class="control-row">
@@ -244,6 +346,7 @@
             <div class="success-alert" id="createSuccessAlertTime">✅ ĐÃ TẠO VÀ ĐƯA THẲNG VÀO KHO THỜI GIAN!</div>
         </div>
 
+        <!-- TAB SYSTEM CONTROL -->
         <div id="tabSystem" class="section">
             <h3>System Main Switch</h3>
             <div class="switch-container">
@@ -370,16 +473,19 @@
                                     <div class="key-details" id="details-${index}" onclick="event.stopPropagation()">
                                         <div style="font-size: 13px; margin-bottom: 6px; color: #60a5fa;">Quản lý hành động (Bắt buộc gõ tay đúng chữ):</div>
                                         
+                                        <!-- DELETE -->
                                         <div class="action-box">
                                             <input type="text" id="input-del-${index}" placeholder="Gõ: DELETE KEY">
                                             <button class="btn-danger" onclick="manageKey('${item.key}', 'delete', 'input-del-${index}', 'DELETE KEY')">DELETE KEY</button>
                                         </div>
 
+                                        <!-- RESET HWID -->
                                         <div class="action-box">
                                             <input type="text" id="input-reset-${index}" placeholder="Gõ: RESET HWID">
                                             <button class="btn-warning" onclick="manageKey('${item.key}', 'reset_hwid', 'input-reset-${index}', 'RESET HWID')">RESET HWID</button>
                                         </div>
 
+                                        <!-- NEUTRALIZE / REMOVE -->
                                         <div class="action-box">
                                             <input type="text" id="input-neu-${index}" placeholder="Gõ: ${neutralizeText}">
                                             <button class="btn-primary" onclick="manageKey('${item.key}', 'neutralize', 'input-neu-${index}', '${neutralizeText}')">${neutralizeText}</button>
@@ -405,7 +511,7 @@
         async function manageKey(keyStr, actionType, inputId, requiredText) {
             let userTyped = document.getElementById(inputId).value.trim();
             if(userTyped !== requiredText) {
-                alert(`Bạn phải gõ chính xác chữ "${requiredText}" vào ô trống mới được bấm Submit!`);
+                alert(`Bạn phải gõ chính xác chữ "${requiredText}" vào ô trống mới được bấm!`);
                 return;
             }
 
@@ -441,4 +547,8 @@
         }
     </script>
 </body>
-</html>
+</html>`);
+});
+
+// Xuất module cho Vercel chạy
+module.exports = app;
