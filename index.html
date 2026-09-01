@@ -1,3 +1,95 @@
+const express = require('express');
+const app = express();
+
+app.use(express.json());
+
+const premiumKeys = new Map();
+const timeKeys = new Map();
+
+app.post('/api/admin/create-premium', (req, res) => {
+    try {
+        const { discordId } = req.body;
+        if (!discordId) return res.json({ status: 'error', message: 'Thiếu Discord ID!' });
+        
+        const randomKey = 'DUBO-PREMIUM-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+        premiumKeys.set(randomKey, { discordId, hwid: 'None', disabled: false, extra: 'Lifetime' });
+        
+        res.json({ status: 'success', key: randomKey });
+    } catch (e) {
+        res.json({ status: 'error', message: e.message });
+    }
+});
+
+app.post('/api/admin/create-time', (req, res) => {
+    try {
+        const { discordId, duration } = req.body;
+        if (!discordId || !duration) return res.json({ status: 'error', message: 'Thiếu thông tin!' });
+        
+        const randomKey = 'DUBO-TIME-' + Math.random().toString(36).substring(2, 10).toUpperCase();
+        timeKeys.set(randomKey, { discordId, hwid: 'None', disabled: false, extra: duration });
+        
+        res.json({ status: 'success', key: randomKey });
+    } catch (e) {
+        res.json({ status: 'error', message: e.message });
+    }
+});
+
+app.post('/api/admin/search-keys', (req, res) => {
+    try {
+        const { discordId } = req.body;
+        if (!discordId) return res.json({ status: 'error', message: 'Thiếu Discord ID!' });
+        
+        let foundKeys = [];
+
+        for (let [key, data] of premiumKeys.entries()) {
+            if (data.discordId.trim() === discordId.trim()) {
+                foundKeys.push({ key, type: 'PREMIUM', ...data });
+            }
+        }
+        for (let [key, data] of timeKeys.entries()) {
+            if (data.discordId.trim() === discordId.trim()) {
+                foundKeys.push({ key, type: 'TIME', ...data });
+            }
+        }
+
+        res.json({ status: 'success', keys: foundKeys });
+    } catch (e) {
+        res.json({ status: 'error', message: e.message });
+    }
+});
+
+app.post('/api/admin/manage-key', (req, res) => {
+    try {
+        const { key, action, confirmText } = req.body;
+        let targetMap = premiumKeys.has(key) ? premiumKeys : (timeKeys.has(key) ? timeKeys : null);
+
+        if (!targetMap) return res.json({ status: 'error', message: 'Không tìm thấy key trên server!' });
+
+        let data = targetMap.get(key);
+
+        if (action === 'delete') {
+            if (confirmText !== 'DELETE KEY') return res.json({ status: 'error', message: 'Sai chữ xác nhận!' });
+            targetMap.delete(key);
+        } else if (action === 'reset_hwid') {
+            if (confirmText !== 'RESET HWID') return res.json({ status: 'error', message: 'Sai chữ xác nhận!' });
+            data.hwid = 'None';
+        } else if (action === 'neutralize') {
+            let reqText = data.disabled ? 'TO REMOVE' : 'TO NEUTRALIZE';
+            if (confirmText !== reqText) return res.json({ status: 'error', message: 'Sai chữ xác nhận!' });
+            
+            if (data.disabled) {
+                targetMap.delete(key);
+            } else {
+                data.disabled = true;
+            }
+        }
+
+        res.json({ status: 'success' });
+    } catch (e) {
+        res.json({ status: 'error', message: e.message });
+    }
+});
+
 const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -449,3 +541,9 @@ const htmlContent = `<!DOCTYPE html>
     </script>
 </body>
 </html>`;
+
+app.get('*', (req, res) => {
+    res.send(htmlContent);
+});
+
+module.exports = app;
