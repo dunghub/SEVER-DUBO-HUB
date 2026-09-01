@@ -32,26 +32,6 @@
             text-align: center;
             position: relative;
         }
-        #loginScreen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        #loginScreen h2 {
-            color: #90e0ef;
-            margin-bottom: 20px;
-            letter-spacing: 1px;
-        }
-        .login-box {
-            display: flex;
-            gap: 10px;
-            width: 100%;
-            max-width: 400px;
-        }
-        #mainDashboard {
-            display: none;
-        }
         .menu-btn {
             position: absolute;
             top: 20px;
@@ -66,9 +46,7 @@
             transition: 0.2s;
             z-index: 10;
         }
-        .menu-btn:hover {
-            background: #2563eb;
-        }
+        .menu-btn:hover { background: #2563eb; }
         .sidebar-menu {
             position: absolute;
             top: 0;
@@ -87,9 +65,7 @@
             border-bottom-left-radius: 15px;
             text-align: left;
         }
-        .sidebar-menu.active {
-            left: 0;
-        }
+        .sidebar-menu.active { left: 0; }
         .menu-item {
             padding: 15px 20px;
             color: #90e0ef;
@@ -99,10 +75,7 @@
             font-size: 14px;
             transition: 0.2s;
         }
-        .menu-item:hover {
-            background: #1e3a8a;
-            color: #fff;
-        }
+        .menu-item:hover { background: #1e3a8a; color: #fff; }
         .avatar-box img {
             width: 110px;
             height: 110px;
@@ -140,21 +113,10 @@
             text-align: left;
             display: none;
         }
-        .section.active-tab {
-            display: block;
-        }
-        .section h3 {
-            color: #60a5fa;
-            margin-bottom: 12px;
-            font-size: 18px;
-        }
-        .control-row {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-        input[type="password"], input[type="text"] {
+        .section.active-tab { display: block; }
+        .section h3 { color: #60a5fa; margin-bottom: 12px; font-size: 18px; }
+        .control-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+        input[type="text"] {
             flex: 1;
             padding: 10px 15px;
             background: #030712;
@@ -163,10 +125,7 @@
             color: #fff;
             outline: none;
         }
-        input[type="password"]:focus, input[type="text"]:focus {
-            border-color: #60a5fa;
-            box-shadow: 0 0 8px rgba(96, 165, 250, 0.4);
-        }
+        input[type="text"]:focus { border-color: #60a5fa; box-shadow: 0 0 8px rgba(96, 165, 250, 0.4); }
         button {
             padding: 10px 20px;
             border: none;
@@ -177,165 +136,84 @@
         }
         .btn-primary { background: #2563eb; color: white; }
         .btn-primary:hover { background: #1d4ed8; }
-        .btn-danger { background: #dc2626; color: white; }
-        .btn-danger:hover { background: #b91c1c; }
         .btn-success { background: #10b981; color: white; }
         .btn-success:hover { background: #059669; }
-        .switch-container {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
+        .switch-container { display: flex; justify-content: space-between; align-items: center; }
+        .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #374151;
-            transition: .4s;
-            border-radius: 34px;
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #374151; transition: .4s; border-radius: 34px;
         }
         .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px; width: 26px;
-            left: 4px; bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
+            position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px;
+            background-color: white; transition: .4s; border-radius: 50%;
         }
         input:checked + .slider { background-color: #10b981; }
         input:checked + .slider:before { transform: translateX(26px); }
         .result-box {
-            margin-top: 15px;
-            background: #030712;
-            padding: 12px;
-            border-radius: 6px;
-            border: 1px dashed #374151;
-            font-size: 14px;
-            max-height: 200px;
-            overflow-y: auto;
+            margin-top: 15px; background: #030712; padding: 12px;
+            border-radius: 6px; border: 1px dashed #374151; font-size: 14px; max-height: 200px; overflow-y: auto;
         }
-        .key-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid #1f2937;
-        }
-        .success-alert {
-            color: #10b981;
-            font-weight: bold;
-            margin-top: 10px;
-            display: none;
-        }
-        .error-msg {
-            color: #ef4444;
-            margin-top: 10px;
-            font-size: 14px;
-            display: none;
-        }
+        .success-alert { color: #10b981; font-weight: bold; margin-top: 10px; display: none; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <div id="loginScreen">
-            <h2>🔒 ENTER SERVER PASSWORD</h2>
-            <div class="login-box">
-                <input type="password" id="passwordInput" placeholder="Enter password (e.g. DUBO-HUB-04012012)...">
-                <button class="btn-primary" onclick="checkPassword()">Access</button>
-            </div>
-            <div class="error-msg" id="errorMsg">Incorrect password! Access denied.</div>
+        <button class="menu-btn" onclick="toggleMenu()">☰</button>
+
+        <div class="sidebar-menu" id="sidebarMenu">
+            <div class="menu-item" onclick="switchTab('tabKey')">🔑 KEY PREMIUM (Vĩnh viễn)</div>
+            <div class="menu-item" onclick="switchTab('tabCreateKey')">➕ TẠO KEY (GENERATE)</div>
+            <div class="menu-item" onclick="switchTab('tabSystem')">⚙️ SYSTEM CONTROL</div>
         </div>
 
-        <div id="mainDashboard">
-            <button class="menu-btn" onclick="toggleMenu()">☰</button>
+        <div class="avatar-box">
+            <img src="https://cdn.discordapp.com/avatars/1154388701237989386/a_f7e91d51a6652d5806e2e50d1891bca7.gif" alt="Bot Avatar">
+        </div>
 
-            <div class="sidebar-menu" id="sidebarMenu">
-                <div class="menu-item" onclick="switchTab('tabKey')">🔑 KEY PREMIUM (Vĩnh viễn)</div>
-                <div class="menu-item" onclick="switchTab('tabCreateKey')">➕ TẠO KEY (GENERATE)</div>
-                <div class="menu-item" onclick="switchTab('tabSystem')">⚙️ SYSTEM CONTROL</div>
+        <div class="brand-title">DUBO HUB</div>
+        <div>
+            <span class="aura-text" id="typedText"></span>
+        </div>
+
+        <div id="tabKey" class="section active-tab">
+            <h3>KEY PREMIUM (Lifetime Database)</h3>
+            <div class="control-row">
+                <input type="text" id="searchDiscordId" placeholder="Dán hoặc tra cứu Key Premium...">
+                <button class="btn-primary" onclick="searchKeyOnServer()">Search Server</button>
             </div>
-
-            <div class="avatar-box">
-                <img src="https://cdn.discordapp.com/avatars/1154388701237989386/a_f7e91d51a6652d5806e2e50d1891bca7.gif" alt="Bot Avatar">
+            <div class="result-box" id="searchResult">
+                <span style="color: #6b7280;">Nhập mã key để kiểm tra trạng thái trên server...</span>
             </div>
+        </div>
 
-            <div class="brand-title">DUBO HUB</div>
-            <div>
-                <span class="aura-text" id="typedText"></span>
+        <div id="tabCreateKey" class="section">
+            <h3>➕ TẠO KEY PREMIUM MỚI</h3>
+            <div class="control-row">
+                <input type="text" id="generatedKeyField" placeholder="Bấm nút Random bên dưới..." readonly>
+                <button class="btn-success" onclick="generateRandomKeyFormServer()">Generate on Server</button>
             </div>
+            <div class="success-alert" id="createSuccessAlert">✅ ĐÃ TẠO KEY PREMIUM THÀNH CÔNG TRÊN SERVER!</div>
+        </div>
 
-            <div id="tabKey" class="section active-tab">
-                <h3>KEY PREMIUM (Lifetime Database)</h3>
-                <div class="control-row">
-                    <input type="text" id="searchDiscordId" placeholder="Dán hoặc tra cứu Key Premium...">
-                    <button class="btn-primary" onclick="searchKeyOnServer()">Search Server</button>
-                </div>
-                <div class="result-box" id="searchResult">
-                    <span style="color: #6b7280;">Nhập mã key để kiểm tra trạng thái trên server...</span>
-                </div>
-            </div>
-
-            <div id="tabCreateKey" class="section">
-                <h3>➕ TẠO KEY PREMIUM MỚI</h3>
-                <div class="control-row">
-                    <input type="text" id="generatedKeyField" placeholder="Bấm nút Random bên dưới..." readonly>
-                    <button class="btn-success" onclick="generateRandomKeyFormServer()">Generate on Server</button>
-                </div>
-                <div class="success-alert" id="createSuccessAlert">✅ ĐÃ TẠO KEY PREMIUM THÀNH CÔNG TRÊN SERVER!</div>
-            </div>
-
-            <div id="tabSystem" class="section">
-                <h3>System Main Switch</h3>
-                <div class="switch-container">
-                    <span id="statusText" style="color: #10b981; font-weight: bold;">System is ONLINE</span>
-                    <label class="switch">
-                        <input type="checkbox" id="mainSystemSwitch" checked onchange="toggleSystem()">
-                        <span class="slider"></span>
-                    </label>
-                </div>
+        <div id="tabSystem" class="section">
+            <h3>System Main Switch</h3>
+            <div class="switch-container">
+                <span id="statusText" style="color: #10b981; font-weight: bold;">System is ONLINE</span>
+                <label class="switch">
+                    <input type="checkbox" id="mainSystemSwitch" checked onchange="toggleSystem()">
+                    <span class="slider"></span>
+                </label>
             </div>
         </div>
     </div>
 
     <script>
-        let adminSecretToken = "";
-
-        async function checkPassword() {
-            let inputPass = document.getElementById("passwordInput").value;
-            let errorMsg = document.getElementById("errorMsg");
-            
-            try {
-                let res = await fetch('/api/admin/create-premium', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Admin-Token': inputPass }
-                });
-                let data = await res.json();
-
-                if (res.status === 200 || data.status === 'success') {
-                    adminSecretToken = inputPass;
-                    document.getElementById("loginScreen").style.display = "none";
-                    document.getElementById("mainDashboard").style.display = "block";
-                    startTypingEffect();
-                } else {
-                    errorMsg.style.display = "block";
-                }
-            } catch (err) {
-                errorMsg.style.display = "block";
-            }
-        }
-
-        document.getElementById("passwordInput").addEventListener("keypress", function(event) {
-            if (event.key === "Enter") checkPassword();
-        });
+        window.onload = function() {
+            startTypingEffect();
+        };
 
         function toggleMenu() {
             document.getElementById("sidebarMenu").classList.toggle("active");
@@ -364,7 +242,7 @@
             try {
                 let res = await fetch('/api/admin/create-premium', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Admin-Token': adminSecretToken }
+                    headers: { 'Content-Type': 'application/json' }
                 });
                 let data = await res.json();
 
