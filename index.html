@@ -23,7 +23,7 @@
         }
         .container {
             width: 100%;
-            max-width: 800px;
+            max-width: 850px;
             background: rgba(10, 25, 47, 0.85);
             border: 1px solid #1e3a8a;
             border-radius: 15px;
@@ -138,6 +138,11 @@
         .btn-primary:hover { background: #1d4ed8; }
         .btn-success { background: #10b981; color: white; }
         .btn-success:hover { background: #059669; }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-warning { background: #f59e0b; color: white; }
+        .btn-warning:hover { background: #d97706; }
+
         .switch-container { display: flex; justify-content: space-between; align-items: center; }
         .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -151,9 +156,31 @@
         }
         input:checked + .slider { background-color: #10b981; }
         input:checked + .slider:before { transform: translateX(26px); }
+
         .result-box {
             margin-top: 15px; background: #030712; padding: 12px;
-            border-radius: 6px; border: 1px dashed #374151; font-size: 14px; max-height: 200px; overflow-y: auto;
+            border-radius: 6px; border: 1px dashed #374151; font-size: 14px; max-height: 280px; overflow-y: auto;
+        }
+        .key-item {
+            padding: 10px;
+            border-bottom: 1px solid #1f2937;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .key-item:hover { background: rgba(30, 58, 138, 0.3); }
+        .key-details {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: #020c1b;
+            border-radius: 6px;
+            border: 1px solid #374151;
+        }
+        .action-box {
+            margin-top: 8px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
         }
         .success-alert { color: #10b981; font-weight: bold; margin-top: 10px; display: none; }
     </style>
@@ -164,8 +191,9 @@
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
 
         <div class="sidebar-menu" id="sidebarMenu">
-            <div class="menu-item" onclick="switchTab('tabKey')">🔑 KEY PREMIUM (Vĩnh viễn)</div>
-            <div class="menu-item" onclick="switchTab('tabCreateKey')">➕ TẠO KEY (GENERATE)</div>
+            <div class="menu-item" onclick="switchTab('tabKey')">🔑 KHO KEY PREMIUM & THỜI GIAN</div>
+            <div class="menu-item" onclick="switchTab('tabCreatePremium')">➕ TẠO KEY PREMIUM</div>
+            <div class="menu-item" onclick="switchTab('tabCreateTime')">⏳ TẠO KEY THỜI GIAN</div>
             <div class="menu-item" onclick="switchTab('tabSystem')">⚙️ SYSTEM CONTROL</div>
         </div>
 
@@ -179,23 +207,41 @@
         </div>
 
         <div id="tabKey" class="section active-tab">
-            <h3>KEY PREMIUM (Lifetime Database)</h3>
+            <h3>TRA CỨU KEY THEO DISCORD ID</h3>
             <div class="control-row">
-                <input type="text" id="searchDiscordId" placeholder="Dán hoặc tra cứu Key Premium...">
-                <button class="btn-primary" onclick="searchKeyOnServer()">Search Server</button>
+                <input type="text" id="searchDiscordId" placeholder="Nhập Discord ID người mua...">
+                <button class="btn-primary" onclick="searchKeysByDiscordId()">Search Server</button>
             </div>
             <div class="result-box" id="searchResult">
-                <span style="color: #6b7280;">Nhập mã key để kiểm tra trạng thái trên server...</span>
+                <span style="color: #6b7280;">Nhập Discord ID để xem toàn bộ key (Premium & Thời gian)...</span>
             </div>
         </div>
 
-        <div id="tabCreateKey" class="section">
+        <div id="tabCreatePremium" class="section">
             <h3>➕ TẠO KEY PREMIUM MỚI</h3>
             <div class="control-row">
-                <input type="text" id="generatedKeyField" placeholder="Bấm nút Random bên dưới..." readonly>
-                <button class="btn-success" onclick="generateRandomKeyFormServer()">Generate on Server</button>
+                <input type="text" id="targetDiscordIdPrem" placeholder="Nhập Discord ID bắt buộc gắn...">
             </div>
-            <div class="success-alert" id="createSuccessAlert">✅ ĐÃ TẠO KEY PREMIUM THÀNH CÔNG TRÊN SERVER!</div>
+            <div class="control-row">
+                <input type="text" id="generatedKeyFieldPrem" placeholder="Bấm nút Random bên dưới..." readonly>
+                <button class="btn-success" onclick="generateKey('premium')">Random & Save</button>
+            </div>
+            <div class="success-alert" id="createSuccessAlertPrem">✅ ĐÃ TẠO VÀ ĐƯA THẲNG VÀO KHO PREMIUM!</div>
+        </div>
+
+        <div id="tabCreateTime" class="section">
+            <h3>⏳ TẠO KEY THỜI GIAN MỚI</h3>
+            <div class="control-row">
+                <input type="text" id="targetDiscordIdTime" placeholder="Nhập Discord ID bắt buộc gắn...">
+            </div>
+            <div class="control-row">
+                <input type="text" id="durationInput" placeholder="Nhập thời gian (VD: 24h, 7d, 30d, 1y)...">
+            </div>
+            <div class="control-row">
+                <input type="text" id="generatedKeyFieldTime" placeholder="Bấm nút Random bên dưới..." readonly>
+                <button class="btn-success" onclick="generateKey('time')">Random & Save</button>
+            </div>
+            <div class="success-alert" id="createSuccessAlertTime">✅ ĐÃ TẠO VÀ ĐƯA THẲNG VÀO KHO THỜI GIAN!</div>
         </div>
 
         <div id="tabSystem" class="section">
@@ -238,17 +284,45 @@
             type();
         }
 
-        async function generateRandomKeyFormServer() {
+        async function generateKey(type) {
+            let discordId, endpoint, fieldId, alertId, payload;
+
+            if (type === 'premium') {
+                discordId = document.getElementById("targetDiscordIdPrem").value.trim();
+                endpoint = '/api/admin/create-premium';
+                fieldId = "generatedKeyFieldPrem";
+                alertId = "createSuccessAlertPrem";
+                payload = { discordId: discordId };
+            } else {
+                discordId = document.getElementById("targetDiscordIdTime").value.trim();
+                let duration = document.getElementById("durationInput").value.trim();
+                endpoint = '/api/admin/create-time';
+                fieldId = "generatedKeyFieldTime";
+                alertId = "createSuccessAlertTime";
+                payload = { discordId: discordId, duration: duration };
+
+                if (!duration) {
+                    alert("Vui lòng nhập thời gian (VD: 24h, 7d, 30d)!");
+                    return;
+                }
+            }
+
+            if (!discordId) {
+                alert("Vui lòng nhập Discord ID bắt buộc gắn!");
+                return;
+            }
+
             try {
-                let res = await fetch('/api/admin/create-premium', {
+                let res = await fetch(endpoint, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
                 let data = await res.json();
 
                 if(data.status === 'success') {
-                    document.getElementById("generatedKeyField").value = data.key;
-                    let alertBox = document.getElementById("createSuccessAlert");
+                    document.getElementById(fieldId).value = data.key;
+                    let alertBox = document.getElementById(alertId);
                     alertBox.style.display = "block";
                     setTimeout(() => { alertBox.style.display = "none"; }, 4000);
                 } else {
@@ -259,14 +333,99 @@
             }
         }
 
-        function searchKeyOnServer() {
-            let keyInput = document.getElementById("searchDiscordId").value.trim();
+        async function searchKeysByDiscordId() {
+            let searchId = document.getElementById("searchDiscordId").value.trim();
             let resultBox = document.getElementById("searchResult");
-            if(!keyInput) {
-                resultBox.innerHTML = "<span style='color: #ef4444;'>Vui lòng nhập mã key cần tìm!</span>";
+            
+            if(!searchId) {
+                resultBox.innerHTML = "<span style='color: #ef4444;'>Vui lòng nhập Discord ID cần tìm!</span>";
                 return;
             }
-            resultBox.innerHTML = `<span style='color: #10b981;'>Đang tra cứu mã: <b>${keyInput}</b> trực tiếp trên cơ sở dữ liệu server...</span>`;
+
+            resultBox.innerHTML = `<span style='color: #60a5fa;'>Đang tra cứu danh sách key của ID: <b>${searchId}</b>...</span>`;
+
+            try {
+                let res = await fetch('/api/admin/search-keys', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ discordId: searchId })
+                });
+                let data = await res.json();
+
+                if(data.status === 'success') {
+                    if(data.keys.length === 0) {
+                        resultBox.innerHTML = `<span style='color: #f59e0b;'>Không tìm thấy key nào liên kết với Discord ID: <b>${searchId}</b></span>`;
+                    } else {
+                        let html = `<b style='color: #10b981;'>Tìm thấy ${data.keys.length} key:</b><br><br>`;
+                        data.keys.forEach((item, index) => {
+                            let typeBadge = item.type === 'PREMIUM' ? "<span style='color: #38bdf8;'>[PREMIUM]</span>" : "<span style='color: #f59e0b;'>[TIME]</span>";
+                            let statusBadge = item.disabled ? "<span style='color: #ef4444;'>[Đã vô hiệu hóa]</span>" : "<span style='color: #10b981;'>[Hoạt động]</span>";
+                            let neutralizeText = item.disabled ? "TO REMOVE" : "TO NEUTRALIZE";
+                            
+                            html += `
+                                <div class="key-item" onclick="toggleKeyDetails('${index}')">
+                                    <div><b>${index + 1}. ${item.key}</b> ${typeBadge} ${statusBadge}</div>
+                                    <div style="font-size: 12px; color: #9ca3af;">Thông tin: ${item.extra} | HWID: ${item.hwid}</div>
+                                    
+                                    <div class="key-details" id="details-${index}" onclick="event.stopPropagation()">
+                                        <div style="font-size: 13px; margin-bottom: 6px; color: #60a5fa;">Quản lý hành động (Bắt buộc gõ tay đúng chữ):</div>
+                                        
+                                        <div class="action-box">
+                                            <input type="text" id="input-del-${index}" placeholder="Gõ: DELETE KEY">
+                                            <button class="btn-danger" onclick="manageKey('${item.key}', 'delete', 'input-del-${index}', 'DELETE KEY')">DELETE KEY</button>
+                                        </div>
+
+                                        <div class="action-box">
+                                            <input type="text" id="input-reset-${index}" placeholder="Gõ: RESET HWID">
+                                            <button class="btn-warning" onclick="manageKey('${item.key}', 'reset_hwid', 'input-reset-${index}', 'RESET HWID')">RESET HWID</button>
+                                        </div>
+
+                                        <div class="action-box">
+                                            <input type="text" id="input-neu-${index}" placeholder="Gõ: ${neutralizeText}">
+                                            <button class="btn-primary" onclick="manageKey('${item.key}', 'neutralize', 'input-neu-${index}', '${neutralizeText}')">${neutralizeText}</button>
+                                        </div>
+                                    </div>
+                                </div>`;
+                        });
+                        resultBox.innerHTML = html;
+                    }
+                } else {
+                    resultBox.innerHTML = `<span style='color: #ef4444;'>Lỗi tra cứu từ server!</span>`;
+                }
+            } catch(e) {
+                resultBox.innerHTML = `<span style='color: #ef4444;'>Không kết nối được với server!</span>`;
+            }
+        }
+
+        function toggleKeyDetails(index) {
+            let el = document.getElementById(`details-${index}`);
+            el.style.display = (el.style.display === 'block') ? 'none' : 'block';
+        }
+
+        async function manageKey(keyStr, actionType, inputId, requiredText) {
+            let userTyped = document.getElementById(inputId).value.trim();
+            if(userTyped !== requiredText) {
+                alert(`Bạn phải gõ chính xác chữ "${requiredText}" vào ô trống mới được bấm Submit!`);
+                return;
+            }
+
+            try {
+                let res = await fetch('/api/admin/manage-key', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key: keyStr, action: actionType, confirmText: userTyped })
+                });
+                let data = await res.json();
+
+                if(data.status === 'success') {
+                    alert("Thao tác thành công!");
+                    searchKeysByDiscordId();
+                } else {
+                    alert("Lỗi: " + data.message);
+                }
+            } catch(e) {
+                alert("Không kết nối được với server!");
+            }
         }
 
         function toggleSystem() {
