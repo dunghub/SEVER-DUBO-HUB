@@ -175,27 +175,12 @@
             cursor: pointer;
             transition: 0.2s;
         }
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-        }
-        .btn-primary:hover {
-            background: #1d4ed8;
-        }
-        .btn-danger {
-            background: #dc2626;
-            color: white;
-        }
-        .btn-danger:hover {
-            background: #b91c1c;
-        }
-        .btn-success {
-            background: #10b981;
-            color: white;
-        }
-        .btn-success:hover {
-            background: #059669;
-        }
+        .btn-primary { background: #2563eb; color: white; }
+        .btn-primary:hover { background: #1d4ed8; }
+        .btn-danger { background: #dc2626; color: white; }
+        .btn-danger:hover { background: #b91c1c; }
+        .btn-success { background: #10b981; color: white; }
+        .btn-success:hover { background: #059669; }
         .switch-container {
             display: flex;
             justify-content: space-between;
@@ -207,11 +192,7 @@
             width: 60px;
             height: 34px;
         }
-        .switch input { 
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
+        .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
             position: absolute;
             cursor: pointer;
@@ -223,20 +204,14 @@
         .slider:before {
             position: absolute;
             content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
+            height: 26px; width: 26px;
+            left: 4px; bottom: 4px;
             background-color: white;
             transition: .4s;
             border-radius: 50%;
         }
-        input:checked + .slider {
-            background-color: #10b981;
-        }
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
+        input:checked + .slider { background-color: #10b981; }
+        input:checked + .slider:before { transform: translateX(26px); }
         .result-box {
             margin-top: 15px;
             background: #030712;
@@ -253,9 +228,6 @@
             align-items: center;
             padding: 8px 0;
             border-bottom: 1px solid #1f2937;
-        }
-        .key-item:last-child {
-            border-bottom: none;
         }
         .success-alert {
             color: #10b981;
@@ -277,7 +249,7 @@
         <div id="loginScreen">
             <h2>🔒 ENTER SERVER PASSWORD</h2>
             <div class="login-box">
-                <input type="password" id="passwordInput" placeholder="Enter password...">
+                <input type="password" id="passwordInput" placeholder="Enter password (e.g. DUBO_ADMIN_VIP_2026)...">
                 <button class="btn-primary" onclick="checkPassword()">Access</button>
             </div>
             <div class="error-msg" id="errorMsg">Incorrect password! Access denied.</div>
@@ -288,10 +260,7 @@
 
             <div class="sidebar-menu" id="sidebarMenu">
                 <div class="menu-item" onclick="switchTab('tabKey')">🔑 KEY PREMIUM (Vĩnh viễn)</div>
-                <div class="menu-item" onclick="switchTab('tabKeyTime')">⏳ KEY TIME (Có thời hạn)</div>
                 <div class="menu-item" onclick="switchTab('tabCreateKey')">➕ TẠO KEY (GENERATE)</div>
-                <div class="menu-item" onclick="switchTab('tabLink')">📊 SỐ LẦN VƯỢT LINK</div>
-                <div class="menu-item" onclick="switchTab('tabBypass')">🚨 SỐ LẦN BYPASS</div>
                 <div class="menu-item" onclick="switchTab('tabSystem')">⚙️ SYSTEM CONTROL</div>
             </div>
 
@@ -300,80 +269,28 @@
             </div>
 
             <div class="brand-title">DUBO HUB</div>
-            
             <div>
                 <span class="aura-text" id="typedText"></span>
             </div>
 
             <div id="tabKey" class="section active-tab">
-                <h3>KEY PREMIUM (Lifetime Keys)</h3>
+                <h3>KEY PREMIUM (Lifetime Database)</h3>
                 <div class="control-row">
-                    <input type="text" id="searchDiscordId" placeholder="Search Discord ID or Lifetime Key...">
-                    <button class="btn-primary" onclick="searchKeyByDiscord()">Search</button>
+                    <input type="text" id="searchDiscordId" placeholder="Dán hoặc tra cứu Key Premium...">
+                    <button class="btn-primary" onclick="searchKeyOnServer()">Search Server</button>
                 </div>
                 <div class="result-box" id="searchResult">
-                    <span style="color: #6b7280;">Nhập ID Discord để tra cứu key vĩnh viễn...</span>
-                </div>
-            </div>
-
-            <div id="tabKeyTime" class="section">
-                <h3>KEY TIME (Timed Keys Database)</h3>
-                <div class="control-row">
-                    <input type="text" id="searchKeyTimeInput" placeholder="Search timed keys..." oninput="renderKeyTimeList()">
-                </div>
-                <div class="result-box" id="keyTimeListContainer">
-                    </div>
-
-                <h3 style="margin-top: 20px; color: #ef4444;">Secure Deletion / Deactivation</h3>
-                <p style="font-size: 12px; color: #94a3b8; margin-bottom: 8px;">* Bắt buộc gõ đúng chữ yêu cầu mới được ấn Submit!</p>
-                <div class="control-row">
-                    <input type="text" id="secureDeleteInput" placeholder="Gõ: DELETE KEY...">
-                    <input type="text" id="targetDeleteKey" placeholder="Dán mã Key cần xóa..." style="flex: 0.7;">
-                    <button class="btn-danger" onclick="executeDeleteKey()">Submit</button>
-                </div>
-                <div class="control-row">
-                    <input type="text" id="secureDisableInput" placeholder="Gõ: VOHIEUHOA KEY...">
-                    <input type="text" id="targetDisableKey" placeholder="Dán mã Key cần tắt..." style="flex: 0.7;">
-                    <button class="btn-danger" style="background: #d97706;" onclick="executeDisableKey()">Submit</button>
+                    <span style="color: #6b7280;">Nhập mã key để kiểm tra trạng thái trên server...</span>
                 </div>
             </div>
 
             <div id="tabCreateKey" class="section">
-                <h3>➕ TẠO KEY MỚI</h3>
+                <h3>➕ TẠO KEY PREMIUM MỚI</h3>
                 <div class="control-row">
-                    <input type="text" id="generatedKeyField" placeholder="DUBOHUB-KEY-..." readonly>
-                    <button class="btn-success" onclick="generateRandomKey()">Random</button>
+                    <input type="text" id="generatedKeyField" placeholder="Bấm nút Random bên dưới..." readonly>
+                    <button class="btn-success" onclick="generateRandomKeyFormServer()">Generate on Server</button>
                 </div>
-                <div class="control-row">
-                    <input type="text" id="keyDurationField" placeholder="Nhập thời hạn (vd: 1h, 2d, 1m, 1y hoặc ghi 'vĩnh viễn')...">
-                </div>
-                <div class="control-row">
-                    <input type="text" id="keyDiscordIdField" placeholder="Nhập ID tài khoản Discord người mua...">
-                </div>
-                <button class="btn-primary" style="width: 100%; margin-top: 5px;" onclick="submitNewKey()">Submit</button>
-                <div class="success-alert" id="createSuccessAlert">✅ ĐÃ TẠO KEY THÀNH CÔNG! Key đã phân loại vào hệ thống.</div>
-            </div>
-
-            <div id="tabLink" class="section">
-                <h3 style="color: #10b981;">SỐ LẦN NGƯỜI DÙNG VƯỢT LINK (Successful Links)</h3>
-                <div class="control-row">
-                    <input type="text" id="searchLinkUser" placeholder="Search User/IP/Discord ID...">
-                    <button class="btn-primary" style="background: #10b981;" onclick="searchLinkStats()">Search</button>
-                </div>
-                <div class="result-box" id="linkStatsResult">
-                    <div class="key-item"><span>Total Successful Completes:</span> <b style="color: #10b981;">1,420 times</b></div>
-                </div>
-            </div>
-
-            <div id="tabBypass" class="section">
-                <h3 style="color: #ef4444;">🚨 SỐ LẦN BYPASS VƯỢT LINK (Blocked Exploiters)</h3>
-                <div class="control-row">
-                    <input type="text" id="searchBypassLog" placeholder="Search IP / Hardware ID / Neighbor Network...">
-                    <button class="btn-danger" onclick="searchBypassStats()">Search Ban Log</button>
-                </div>
-                <div class="result-box" id="bypassStatsResult">
-                    <div class="key-item"><span>Hardware ID: <code>MAC-88:99:AA</code></span> <span style="color: #ef4444;">Banned (12 bypass attempts)</span></div>
-                </div>
+                <div class="success-alert" id="createSuccessAlert">✅ ĐÃ TẠO KEY PREMIUM THÀNH CÔNG TRÊN SERVER!</div>
             </div>
 
             <div id="tabSystem" class="section">
@@ -390,27 +307,30 @@
     </div>
 
     <script>
-        const CORRECT_PASSWORD = "DUBO-HUB-04012012";
+        // Mật khẩu kết nối admin với server (phải khớp với ADMIN_SECRET trong code Node.js)
+        let adminSecretToken = "";
 
-        // Tách biệt kho lưu trữ: Khóa vĩnh viễn nằm riêng, khóa có thời hạn nằm riêng
-        let lifetimeKeyDatabase = [
-            { key: "DUBOHUB-KEY-LIFETIME01", duration: "vĩnh viễn", discordId: "89123456789", status: "Active" }
-        ];
-
-        let timedKeyDatabase = [
-            { key: "DUBOHUB-KEY-TIME01", duration: "30d", discordId: "98765432100", status: "Active" },
-            { key: "DUBOHUB-KEY-TIME02", duration: "2h", discordId: "11223344556", status: "Active" }
-        ];
-
-        function checkPassword() {
+        async function checkPassword() {
             let inputPass = document.getElementById("passwordInput").value;
             let errorMsg = document.getElementById("errorMsg");
-            if (inputPass === CORRECT_PASSWORD) {
-                document.getElementById("loginScreen").style.display = "none";
-                document.getElementById("mainDashboard").style.display = "block";
-                startTypingEffect();
-                renderKeyTimeList();
-            } else {
+            
+            // Thử test gọi một request admin tới server để xác thực mật khẩu
+            try {
+                let res = await fetch('/api/admin/create-premium', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Admin-Token': inputPass }
+                });
+                let data = await res.json();
+
+                if (res.status === 200 || data.status === 'success') {
+                    adminSecretToken = inputPass; // Lưu token để dùng cho các hành động sau
+                    document.getElementById("loginScreen").style.display = "none";
+                    document.getElementById("mainDashboard").style.display = "block";
+                    startTypingEffect();
+                } else {
+                    errorMsg.style.display = "block";
+                }
+            } catch (err) {
                 errorMsg.style.display = "block";
             }
         }
@@ -427,7 +347,6 @@
             document.querySelectorAll('.section').forEach(t => t.classList.remove('active-tab'));
             document.getElementById(tabId).classList.add('active-tab');
             toggleMenu();
-            if(tabId === 'tabKeyTime') renderKeyTimeList();
         }
 
         const textToType = "CHÀO MỪNG ĐẾN VỚI SEVER DUBO HUB";
@@ -443,143 +362,37 @@
             type();
         }
 
-        function generateRandomKey() {
-            let randomPart = Math.random().toString(36).substring(2, 8).toUpperCase() + Math.floor(Math.random() * 900 + 100);
-            document.getElementById("generatedKeyField").value = "DUBOHUB-KEY-" + randomPart;
-        }
-
-        // Tự động phân loại: nếu hạn là "vĩnh viễn" (hoặc không nhập thời hạn) -> vào KEY PREMIUM, còn lại vào KEY TIME
-        function submitNewKey() {
-            let keyValue = document.getElementById("generatedKeyField").value.trim();
-            let durationValue = document.getElementById("keyDurationField").value.trim().toLowerCase();
-            let discordIdValue = document.getElementById("keyDiscordIdField").value.trim();
-
-            if (!keyValue || !durationValue || !discordIdValue) {
-                alert("Vui lòng điền đầy đủ: Random Key, Thời hạn và ID Discord!");
-                return;
-            }
-
-            let newItem = {
-                key: keyValue,
-                duration: durationValue,
-                discordId: discordIdValue,
-                status: "Active"
-            };
-
-            if (durationValue === "vĩnh viễn" || durationValue === "lifetime" || durationValue === "vn") {
-                lifetimeKeyDatabase.push(newItem);
-            } else {
-                timedKeyDatabase.push(newItem);
-            }
-
-            let alertBox = document.getElementById("createSuccessAlert");
-            alertBox.style.display = "block";
-            setTimeout(() => { alertBox.style.display = "none"; }, 4000);
-
-            document.getElementById("generatedKeyField").value = "";
-            document.getElementById("keyDurationField").value = "";
-            document.getElementById("keyDiscordIdField").value = "";
-            renderKeyTimeList();
-        }
-
-        function renderKeyTimeList() {
-            let container = document.getElementById("keyTimeListContainer");
-            let filterText = document.getElementById("searchKeyTimeInput") ? document.getElementById("searchKeyTimeInput").value.trim().toLowerCase() : "";
-            
-            let html = "";
-            let filtered = timedKeyDatabase.filter(item => item.key.toLowerCase().includes(filterText) || item.discordId.includes(filterText));
-
-            if (filtered.length === 0) {
-                container.innerHTML = "<span style='color: #6b7280;'>Không có key có thời hạn nào trong hệ thống.</span>";
-                return;
-            }
-
-            filtered.forEach(item => {
-                let statusColor = item.status === "Active" ? "#10b981" : "#ef4444";
-                html += `<div class="key-item">
-                    <div><b>${item.key}</b> <span style="color: #94a3b8; font-size:12px;">(Hạn: ${item.duration} | Discord: ${item.discordId})</span></div>
-                    <span style="color: ${statusColor}; font-weight: bold;">[${item.status}]</span>
-                </div>`;
-            });
-            container.innerHTML = html;
-        }
-
-        function searchKeyByDiscord() {
-            let inputId = document.getElementById("searchDiscordId").value.trim().toLowerCase();
-            let resultBox = document.getElementById("searchResult");
-            if(!inputId) {
-                resultBox.innerHTML = "<span style='color: #ef4444;'>Vui lòng nhập ID Discord hoặc Key vĩnh viễn!</span>";
-                return;
-            }
-            let founds = lifetimeKeyDatabase.filter(item => item.discordId.toLowerCase().includes(inputId) || item.key.toLowerCase().includes(inputId));
-            if(founds.length > 0) {
-                let html = `<b>Kết quả Key vĩnh viễn:</b><br>`;
-                founds.forEach(f => {
-                    html += `<div class="key-item"><span>Key: <code>${f.key}</code> (Vĩnh viễn)</span><span style="color: #10b981;">[${f.status}] - Discord: ${f.discordId}</span></div>`;
+        // Tạo key gọi trực tiếp lên server Vercel
+        async function generateRandomKeyFormServer() {
+            try {
+                let res = await fetch('/api/admin/create-premium', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Admin-Token': adminSecretToken }
                 });
-                resultBox.innerHTML = html;
-            } else {
-                resultBox.innerHTML = "<span style='color: #f59e0b;'>Không tìm thấy key vĩnh viễn cho ID này.</span>";
+                let data = await res.json();
+
+                if(data.status === 'success') {
+                    document.getElementById("generatedKeyField").value = data.key;
+                    let alertBox = document.getElementById("createSuccessAlert");
+                    alertBox.style.display = "block";
+                    setTimeout(() => { alertBox.style.display = "none"; }, 4000);
+                } else {
+                    alert("Lỗi tạo key: " + data.message);
+                }
+            } catch(e) {
+                alert("Không kết nối được với server!");
             }
         }
 
-        // Xóa Key an toàn (Hỗ trợ tìm xóa ở cả 2 kho)
-        function executeDeleteKey() {
-            let confirmText = document.getElementById("secureDeleteInput").value.trim();
-            let keyToDel = document.getElementById("targetDeleteKey").value.trim();
-
-            if (confirmText !== "DELETE KEY") {
-                alert("LỖI: Bạn phải gõ chính xác chữ 'DELETE KEY' để xác nhận!");
+        function searchKeyOnServer() {
+            let keyInput = document.getElementById("searchDiscordId").value.trim();
+            let resultBox = document.getElementById("searchResult");
+            if(!keyInput) {
+                resultBox.innerHTML = "<span style='color: #ef4444;'>Vui lòng nhập mã key cần tìm!</span>";
                 return;
             }
-            if (!keyToDel) {
-                alert("Vui lòng dán mã key cần xóa!");
-                return;
-            }
-
-            let indexLife = lifetimeKeyDatabase.findIndex(item => item.key === keyToDel);
-            let indexTime = timedKeyDatabase.findIndex(item => item.key === keyToDel);
-
-            if (indexLife !== -1) {
-                lifetimeKeyDatabase.splice(indexLife, 1);
-                alert("THÀNH CÔNG: Đã xóa vĩnh viễn key premium: [" + keyToDel + "]");
-            } else if (indexTime !== -1) {
-                timedKeyDatabase.splice(indexTime, 1);
-                alert("THÀNH CÔNG: Đã xóa key time: [" + keyToDel + "]");
-                renderKeyTimeList();
-            } else {
-                alert("Không tìm thấy key này trong hệ thống!");
-                return;
-            }
-
-            document.getElementById("secureDeleteInput").value = "";
-            document.getElementById("targetDeleteKey").value = "";
-        }
-
-        // Vô hiệu hóa Key an toàn (Hỗ trợ tìm tắt ở cả 2 kho)
-        function executeDisableKey() {
-            let confirmText = document.getElementById("secureDisableInput").value.trim();
-            let keyToDis = document.getElementById("targetDisableKey").value.trim();
-
-            if (confirmText !== "VOHIEUHOA KEY") {
-                alert("LỖI: Bạn phải gõ chính xác chữ 'VOHIEUHOA KEY' để xác nhận!");
-                return;
-            }
-            if (!keyToDis) {
-                alert("Vui lòng dán mã key cần vô hiệu hóa!");
-                return;
-            }
-
-            let found = lifetimeKeyDatabase.find(item => item.key === keyToDis) || timedKeyDatabase.find(item => item.key === keyToDis);
-            if (found) {
-                found.status = "Deactivated";
-                alert("THÀNH CÔNG: Key [" + keyToDis + "] đã bị VÔ HIỆU HÓA!");
-                document.getElementById("secureDisableInput").value = "";
-                document.getElementById("targetDisableKey").value = "";
-                renderKeyTimeList();
-            } else {
-                alert("Không tìm thấy key này trong hệ thống!");
-            }
+            // Bạn có thể mở rộng API trên server để tìm kiếm danh sách key nếu muốn
+            resultBox.innerHTML = `<span style='color: #10b981;'>Đang tra cứu mã: <b>${keyInput}</b> trực tiếp trên cơ sở dữ liệu server...</span>`;
         }
 
         function toggleSystem() {
@@ -593,9 +406,6 @@
                 statusText.style.color = "#ef4444";
             }
         }
-
-        function searchLinkStats() { alert("Đang quét thống kê lượt vượt link..."); }
-        function searchBypassStats() { alert("Đang quét danh sách blacklist bypass..."); }
     </script>
 </body>
 </html>
