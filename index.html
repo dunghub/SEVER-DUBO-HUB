@@ -1,103 +1,4 @@
-const express = require('express');
-const app = express();
-
-app.use(express.json());
-
-// Bộ nhớ lưu trữ Key tạm thời trên Serverless (Dùng Map)
-const premiumKeys = new Map();
-const timeKeys = new Map();
-
-// --- 1. API TẠO KEY PREMIUM ---
-app.post('/api/admin/create-premium', (req, res) => {
-    try {
-        const { discordId } = req.body;
-        if (!discordId) return res.json({ status: 'error', message: 'Thiếu Discord ID!' });
-        
-        const randomKey = 'DUBO-PREMIUM-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-        premiumKeys.set(randomKey, { discordId, hwid: 'None', disabled: false, extra: 'Lifetime' });
-        
-        res.json({ status: 'success', key: randomKey });
-    } catch (e) {
-        res.json({ status: 'error', message: e.message });
-    }
-});
-
-// --- 2. API TẠO KEY THỜI GIAN ---
-app.post('/api/admin/create-time', (req, res) => {
-    try {
-        const { discordId, duration } = req.body;
-        if (!discordId || !duration) return res.json({ status: 'error', message: 'Thiếu thông tin!' });
-        
-        const randomKey = 'DUBO-TIME-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-        timeKeys.set(randomKey, { discordId, hwid: 'None', disabled: false, extra: duration });
-        
-        res.json({ status: 'success', key: randomKey });
-    } catch (e) {
-        res.json({ status: 'error', message: e.message });
-    }
-});
-
-// --- 3. API TRA CỨU KEY THEO DISCORD ID ---
-app.post('/api/admin/search-keys', (req, res) => {
-    try {
-        const { discordId } = req.body;
-        if (!discordId) return res.json({ status: 'error', message: 'Thiếu Discord ID!' });
-        
-        let foundKeys = [];
-
-        for (let [key, data] of premiumKeys.entries()) {
-            if (data.discordId.trim() === discordId.trim()) {
-                foundKeys.push({ key, type: 'PREMIUM', ...data });
-            }
-        }
-        for (let [key, data] of timeKeys.entries()) {
-            if (data.discordId.trim() === discordId.trim()) {
-                foundKeys.push({ key, type: 'TIME', ...data });
-            }
-        }
-
-        res.json({ status: 'success', keys: foundKeys });
-    } catch (e) {
-        res.json({ status: 'error', message: e.message });
-    }
-});
-
-// --- 4. API QUẢN LÝ KEY (DELETE / RESET / NEUTRALIZE) ---
-app.post('/api/admin/manage-key', (req, res) => {
-    try {
-        const { key, action, confirmText } = req.body;
-        let targetMap = premiumKeys.has(key) ? premiumKeys : (timeKeys.has(key) ? timeKeys : null);
-
-        if (!targetMap) return res.json({ status: 'error', message: 'Không tìm thấy key trên server!' });
-
-        let data = targetMap.get(key);
-
-        if (action === 'delete') {
-            if (confirmText !== 'DELETE KEY') return res.json({ status: 'error', message: 'Sai chữ xác nhận!' });
-            targetMap.delete(key);
-        } else if (action === 'reset_hwid') {
-            if (confirmText !== 'RESET HWID') return res.json({ status: 'error', message: 'Sai chữ xác nhận!' });
-            data.hwid = 'None';
-        } else if (action === 'neutralize') {
-            let reqText = data.disabled ? 'TO REMOVE' : 'TO NEUTRALIZE';
-            if (confirmText !== reqText) return res.json({ status: 'error', message: 'Sai chữ xác nhận!' });
-            
-            if (data.disabled) {
-                targetMap.delete(key);
-            } else {
-                data.disabled = true;
-            }
-        }
-
-        res.json({ status: 'success' });
-    } catch (e) {
-        res.json({ status: 'error', message: e.message });
-    }
-});
-
-// --- 5. GIAO DIỆN ADMIN PANEL (TRẢ VỀ KHI TRUY CẬP TRANG CHỦ) ---
-app.get('*', (req, res) => {
-    res.send(`<!DOCTYPE html>
+const htmlContent = `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -118,7 +19,7 @@ app.get('*', (req, res) => {
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 30px 15px;
+            padding: 20px 10px;
         }
         .container {
             width: 100%;
@@ -126,15 +27,15 @@ app.get('*', (req, res) => {
             background: rgba(10, 25, 47, 0.85);
             border: 1px solid #1e3a8a;
             border-radius: 15px;
-            padding: 30px;
+            padding: 20px;
             box-shadow: 0 0 25px rgba(0, 149, 255, 0.3);
             text-align: center;
             position: relative;
         }
         .menu-btn {
             position: absolute;
-            top: 20px;
-            left: 20px;
+            top: 15px;
+            left: 15px;
             background: #1e3a8a;
             border: 1px solid #3b82f6;
             color: #fff;
@@ -176,29 +77,28 @@ app.get('*', (req, res) => {
         }
         .menu-item:hover { background: #1e3a8a; color: #fff; }
         .avatar-box img {
-            width: 110px;
-            height: 110px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             border: 2px solid #00b4d8;
             box-shadow: 0 0 20px rgba(0, 180, 216, 0.6);
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             object-fit: cover;
         }
         .brand-title {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: bold;
             letter-spacing: 2px;
             color: #90e0ef;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
         .aura-text {
-            font-size: 16px;
+            font-size: 14px;
             color: #00f5d4;
             text-shadow: 0 0 10px rgba(0, 245, 212, 0.7);
-            min-height: 30px;
-            margin-bottom: 25px;
+            min-height: 25px;
+            margin-bottom: 20px;
             font-family: monospace;
-            border-right: 2px solid #00f5d4;
             white-space: nowrap;
             overflow: hidden;
             display: inline-block;
@@ -207,31 +107,35 @@ app.get('*', (req, res) => {
             background: rgba(2, 12, 27, 0.6);
             border: 1px solid #1d4ed8;
             border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 20px;
+            padding: 15px;
+            margin-bottom: 15px;
             text-align: left;
             display: none;
         }
         .section.active-tab { display: block; }
-        .section h3 { color: #60a5fa; margin-bottom: 12px; font-size: 18px; }
-        .control-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; }
+        .section h3 { color: #60a5fa; margin-bottom: 10px; font-size: 16px; }
+        .control-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; width: 100%; }
         input[type="text"] {
+            width: 100%;
             flex: 1;
-            padding: 10px 15px;
+            padding: 10px;
             background: #030712;
             border: 1px solid #3b82f6;
             border-radius: 6px;
             color: #fff;
             outline: none;
+            font-size: 14px;
         }
         input[type="text"]:focus { border-color: #60a5fa; box-shadow: 0 0 8px rgba(96, 165, 250, 0.4); }
         button {
-            padding: 10px 20px;
+            padding: 10px 15px;
             border: none;
             border-radius: 6px;
             font-weight: bold;
             cursor: pointer;
             transition: 0.2s;
+            white-space: nowrap;
+            font-size: 14px;
         }
         .btn-primary { background: #2563eb; color: white; }
         .btn-primary:hover { background: #1d4ed8; }
@@ -243,25 +147,25 @@ app.get('*', (req, res) => {
         .btn-warning:hover { background: #d97706; }
 
         .switch-container { display: flex; justify-content: space-between; align-items: center; }
-        .switch { position: relative; display: inline-block; width: 60px; height: 34px; }
+        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
             position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #374151; transition: .4s; border-radius: 34px;
+            background-color: #374151; transition: .4s; border-radius: 28px;
         }
         .slider:before {
-            position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px;
+            position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px;
             background-color: white; transition: .4s; border-radius: 50%;
         }
         input:checked + .slider { background-color: #10b981; }
-        input:checked + .slider:before { transform: translateX(26px); }
+        input:checked + .slider:before { transform: translateX(22px); }
 
         .result-box {
-            margin-top: 15px; background: #030712; padding: 12px;
-            border-radius: 6px; border: 1px dashed #374151; font-size: 14px; max-height: 280px; overflow-y: auto;
+            margin-top: 10px; background: #030712; padding: 10px;
+            border-radius: 6px; border: 1px dashed #374151; font-size: 13px; max-height: 250px; overflow-y: auto;
         }
         .key-item {
-            padding: 10px;
+            padding: 8px;
             border-bottom: 1px solid #1f2937;
             cursor: pointer;
             transition: 0.2s;
@@ -269,19 +173,19 @@ app.get('*', (req, res) => {
         .key-item:hover { background: rgba(30, 58, 138, 0.3); }
         .key-details {
             display: none;
-            margin-top: 10px;
-            padding: 10px;
+            margin-top: 8px;
+            padding: 8px;
             background: #020c1b;
             border-radius: 6px;
             border: 1px solid #374151;
         }
         .action-box {
-            margin-top: 8px;
+            margin-top: 6px;
             display: flex;
-            gap: 8px;
+            gap: 6px;
             align-items: center;
         }
-        .success-alert { color: #10b981; font-weight: bold; margin-top: 10px; display: none; }
+        .success-alert { color: #10b981; font-weight: bold; margin-top: 8px; display: none; font-size: 13px; }
     </style>
 </head>
 <body>
@@ -297,7 +201,7 @@ app.get('*', (req, res) => {
         </div>
 
         <div class="avatar-box">
-            <img src="https://cdn.discordapp.com/avatars/1154388701237989386/a_f7e91d51a6652d5806e2e50d1891bca7.gif" alt="Bot Avatar">
+            <img src="https://cdn.discordapp.com/attachments/1530612413966188584/1544230813690757260/IMG_1109.png?ex=6a97c084&is=6a966f04&hm=859498894699993427601e70647d9489c873b557f711536d9fa1f3bf862c489d&" alt="Bot Avatar">
         </div>
 
         <div class="brand-title">DUBO HUB</div>
@@ -313,7 +217,7 @@ app.get('*', (req, res) => {
                 <button class="btn-primary" onclick="searchKeysByDiscordId()">Search Server</button>
             </div>
             <div class="result-box" id="searchResult">
-                <span style="color: #6b7280;">Nhập Discord ID để xem toàn bộ key (Premium & Thời gian)...</span>
+                <span style="color: #6b7280;">Nhập Discord ID để xem toàn bộ key...</span>
             </div>
         </div>
 
@@ -327,7 +231,7 @@ app.get('*', (req, res) => {
                 <input type="text" id="generatedKeyFieldPrem" placeholder="Bấm nút Random bên dưới..." readonly>
                 <button class="btn-success" onclick="generateKey('premium')">Random & Save</button>
             </div>
-            <div class="success-alert" id="createSuccessAlertPrem">✅ ĐÃ TẠO VÀ ĐƯA THẲNG VÀO KHO PREMIUM!</div>
+            <div class="success-alert" id="createSuccessAlertPrem">✅ ĐÃ TẠO VÀ ĐƯA THẲNG VÀO KHO!</div>
         </div>
 
         <!-- TAB TẠO KEY THỜI GIAN -->
@@ -337,20 +241,20 @@ app.get('*', (req, res) => {
                 <input type="text" id="targetDiscordIdTime" placeholder="Nhập Discord ID bắt buộc gắn...">
             </div>
             <div class="control-row">
-                <input type="text" id="durationInput" placeholder="Nhập thời gian (VD: 24h, 7d, 30d, 1y)...">
+                <input type="text" id="durationInput" placeholder="Nhập thời gian (VD: 24h, 7d, 30d)...">
             </div>
             <div class="control-row">
                 <input type="text" id="generatedKeyFieldTime" placeholder="Bấm nút Random bên dưới..." readonly>
                 <button class="btn-success" onclick="generateKey('time')">Random & Save</button>
             </div>
-            <div class="success-alert" id="createSuccessAlertTime">✅ ĐÃ TẠO VÀ ĐƯA THẲNG VÀO KHO THỜI GIAN!</div>
+            <div class="success-alert" id="createSuccessAlertTime">✅ ĐÃ TẠO VÀ ĐƯA THẲNG VÀO KHO!</div>
         </div>
 
         <!-- TAB SYSTEM CONTROL -->
         <div id="tabSystem" class="section">
             <h3>System Main Switch</h3>
             <div class="switch-container">
-                <span id="statusText" style="color: #10b981; font-weight: bold;">System is ONLINE</span>
+                <span id="statusText" style="color: #10b981; font-weight: bold; font-size: 14px;">System is ONLINE</span>
                 <label class="switch">
                     <input type="checkbox" id="mainSystemSwitch" checked onchange="toggleSystem()">
                     <span class="slider"></span>
@@ -405,13 +309,13 @@ app.get('*', (req, res) => {
                 payload = { discordId: discordId, duration: duration };
 
                 if (!duration) {
-                    alert("Vui lòng nhập thời gian (VD: 24h, 7d, 30d)!");
+                    alert("Vui lòng nhập thời gian!");
                     return;
                 }
             }
 
             if (!discordId) {
-                alert("Vui lòng nhập Discord ID bắt buộc gắn!");
+                alert("Vui lòng nhập Discord ID!");
                 return;
             }
 
@@ -429,10 +333,10 @@ app.get('*', (req, res) => {
                     alertBox.style.display = "block";
                     setTimeout(() => { alertBox.style.display = "none"; }, 4000);
                 } else {
-                    alert("Lỗi tạo key: " + data.message);
+                    alert("Lỗi: " + data.message);
                 }
             } catch(e) {
-                alert("Không kết nối được với server!");
+                alert("Không kết nối được server!");
             }
         }
 
@@ -441,11 +345,11 @@ app.get('*', (req, res) => {
             let resultBox = document.getElementById("searchResult");
             
             if(!searchId) {
-                resultBox.innerHTML = "<span style='color: #ef4444;'>Vui lòng nhập Discord ID cần tìm!</span>";
+                resultBox.innerHTML = "<span style='color: #ef4444;'>Vui lòng nhập Discord ID!</span>";
                 return;
             }
 
-            resultBox.innerHTML = `<span style='color: #60a5fa;'>Đang tra cứu danh sách key của ID: <b>${searchId}</b>...</span>`;
+            resultBox.innerHTML = \`<span style='color: #60a5fa;'>Đang tra cứu...</span>\`;
 
             try {
                 let res = await fetch('/api/admin/search-keys', {
@@ -457,61 +361,58 @@ app.get('*', (req, res) => {
 
                 if(data.status === 'success') {
                     if(data.keys.length === 0) {
-                        resultBox.innerHTML = `<span style='color: #f59e0b;'>Không tìm thấy key nào liên kết với Discord ID: <b>${searchId}</b></span>`;
+                        resultBox.innerHTML = \`<span style='color: #f59e0b;'>Không tìm thấy key nào!</span>\`;
                     } else {
-                        let html = `<b style='color: #10b981;'>Tìm thấy ${data.keys.length} key:</b><br><br>`;
+                        let html = \`<b style='color: #10b981;'>Tìm thấy \${data.keys.length} key:</b><br><br>\`;
                         data.keys.forEach((item, index) => {
                             let typeBadge = item.type === 'PREMIUM' ? "<span style='color: #38bdf8;'>[PREMIUM]</span>" : "<span style='color: #f59e0b;'>[TIME]</span>";
-                            let statusBadge = item.disabled ? "<span style='color: #ef4444;'>[Đã vô hiệu hóa]</span>" : "<span style='color: #10b981;'>[Hoạt động]</span>";
+                            let statusBadge = item.disabled ? "<span style='color: #ef4444;'>[Đã khóa]</span>" : "<span style='color: #10b981;'>[Hoạt động]</span>";
                             let neutralizeText = item.disabled ? "TO REMOVE" : "TO NEUTRALIZE";
                             
-                            html += `
-                                <div class="key-item" onclick="toggleKeyDetails('${index}')">
-                                    <div><b>${index + 1}. ${item.key}</b> ${typeBadge} ${statusBadge}</div>
-                                    <div style="font-size: 12px; color: #9ca3af;">Thông tin: ${item.extra} | HWID: ${item.hwid}</div>
+                            html += \`
+                                <div class="key-item" onclick="toggleKeyDetails('\${index}')">
+                                    <div><b>\${index + 1}. \${item.key}</b> \${typeBadge} \${statusBadge}</div>
+                                    <div style="font-size: 11px; color: #9ca3af;">Info: \${item.extra} | HWID: \${item.hwid}</div>
                                     
-                                    <div class="key-details" id="details-${index}" onclick="event.stopPropagation()">
-                                        <div style="font-size: 13px; margin-bottom: 6px; color: #60a5fa;">Quản lý hành động (Bắt buộc gõ tay đúng chữ):</div>
+                                    <div class="key-details" id="details-\${index}" onclick="event.stopPropagation()">
+                                        <div style="font-size: 12px; margin-bottom: 5px; color: #60a5fa;">Xác nhận hành động:</div>
                                         
-                                        <!-- DELETE -->
                                         <div class="action-box">
-                                            <input type="text" id="input-del-${index}" placeholder="Gõ: DELETE KEY">
-                                            <button class="btn-danger" onclick="manageKey('${item.key}', 'delete', 'input-del-${index}', 'DELETE KEY')">DELETE KEY</button>
+                                            <input type="text" id="input-del-\${index}" placeholder="Gõ: DELETE KEY">
+                                            <button class="btn-danger" onclick="manageKey('\${item.key}', 'delete', 'input-del-\${index}', 'DELETE KEY')">DELETE</button>
                                         </div>
 
-                                        <!-- RESET HWID -->
                                         <div class="action-box">
-                                            <input type="text" id="input-reset-${index}" placeholder="Gõ: RESET HWID">
-                                            <button class="btn-warning" onclick="manageKey('${item.key}', 'reset_hwid', 'input-reset-${index}', 'RESET HWID')">RESET HWID</button>
+                                            <input type="text" id="input-reset-\${index}" placeholder="Gõ: RESET HWID">
+                                            <button class="btn-warning" onclick="manageKey('\${item.key}', 'reset_hwid', 'input-reset-\${index}', 'RESET HWID')">HWID</button>
                                         </div>
 
-                                        <!-- NEUTRALIZE / REMOVE -->
                                         <div class="action-box">
-                                            <input type="text" id="input-neu-${index}" placeholder="Gõ: ${neutralizeText}">
-                                            <button class="btn-primary" onclick="manageKey('${item.key}', 'neutralize', 'input-neu-${index}', '${neutralizeText}')">${neutralizeText}</button>
+                                            <input type="text" id="input-neu-\${index}" placeholder="Gõ: \${neutralizeText}">
+                                            <button class="btn-primary" onclick="manageKey('\${item.key}', 'neutralize', 'input-neu-\${index}', '\${neutralizeText}')">\${neutralizeText}</button>
                                         </div>
                                     </div>
-                                </div>`;
+                                </div>\`;
                         });
                         resultBox.innerHTML = html;
                     }
                 } else {
-                    resultBox.innerHTML = `<span style='color: #ef4444;'>Lỗi tra cứu từ server!</span>`;
+                    resultBox.innerHTML = \`<span style='color: #ef4444;'>Lỗi từ server!</span>\`;
                 }
             } catch(e) {
-                resultBox.innerHTML = `<span style='color: #ef4444;'>Không kết nối được với server!</span>`;
+                resultBox.innerHTML = \`<span style='color: #ef4444;'>Lỗi kết nối!</span>\`;
             }
         }
 
         function toggleKeyDetails(index) {
-            let el = document.getElementById(`details-${index}`);
+            let el = document.getElementById('details-' + index);
             el.style.display = (el.style.display === 'block') ? 'none' : 'block';
         }
 
         async function manageKey(keyStr, actionType, inputId, requiredText) {
             let userTyped = document.getElementById(inputId).value.trim();
             if(userTyped !== requiredText) {
-                alert(`Bạn phải gõ chính xác chữ "${requiredText}" vào ô trống mới được bấm!`);
+                alert('Phải gõ chính xác "' + requiredText + '"!');
                 return;
             }
 
@@ -524,13 +425,13 @@ app.get('*', (req, res) => {
                 let data = await res.json();
 
                 if(data.status === 'success') {
-                    alert("Thao tác thành công!");
+                    alert("Thành công!");
                     searchKeysByDiscordId();
                 } else {
                     alert("Lỗi: " + data.message);
                 }
             } catch(e) {
-                alert("Không kết nối được với server!");
+                alert("Lỗi kết nối!");
             }
         }
 
@@ -541,14 +442,10 @@ app.get('*', (req, res) => {
                 statusText.innerText = "System is ONLINE";
                 statusText.style.color = "#10b981";
             } else {
-                statusText.innerText = "System is OFFLINE (Locked)";
+                statusText.innerText = "System is OFFLINE";
                 statusText.style.color = "#ef4444";
             }
         }
     </script>
 </body>
-</html>`);
-});
-
-// Xuất module cho Vercel chạy
-module.exports = app;
+</html>`;
