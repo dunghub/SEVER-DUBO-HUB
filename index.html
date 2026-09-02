@@ -126,7 +126,7 @@ app.post('/api/admin/manage-key', async (req, res) => {
     }
 });
 
-// Giao diện web tối ưu mobile tích hợp Thanh tìm kiếm Key
+// Giao diện web tối ưu mobile tích hợp Thanh tìm kiếm Key và Menu Sidebar chuẩn xác
 app.get('*', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(`<!DOCTYPE html>
@@ -137,16 +137,22 @@ app.get('*', (req, res) => {
     <title>DUBO HUB - Secure Private Gateway</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: linear-gradient(135deg, #0a192f, #020c1b); color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px 10px; }
+        body { background: linear-gradient(135deg, #0a192f, #020c1b); color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px 10px; overflow-x: hidden; }
         .container { width: 100%; max-width: 850px; background: rgba(10, 25, 47, 0.85); border: 1px solid #1e3a8a; border-radius: 15px; padding: 20px; box-shadow: 0 0 25px rgba(0, 149, 255, 0.3); text-align: center; position: relative; }
-        .menu-btn { position: absolute; top: 15px; left: 15px; background: #1e3a8a; border: 1px solid #3b82f6; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 18px; z-index: 10; }
-        .sidebar-menu { position: absolute; top: 0; left: -280px; width: 270px; height: 100%; background: #030712; border-right: 1px solid #1e3a8a; transition: 0.3s; z-index: 20; display: flex; flex-direction: column; padding-top: 60px; border-top-left-radius: 15px; border-bottom-left-radius: 15px; text-align: left; }
+        
+        /* Nút 3 gạch */
+        .menu-btn { position: absolute; top: 15px; left: 15px; background: #1e3a8a; border: 1px solid #3b82f6; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 18px; z-index: 100; }
+        
+        /* Menu Sidebar */
+        .sidebar-menu { position: fixed; top: 0; left: -280px; width: 270px; height: 100%; background: #030712; border-right: 1px solid #1e3a8a; transition: 0.3s ease-in-out; z-index: 99; display: flex; flex-direction: column; padding-top: 70px; text-align: left; box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
         .sidebar-menu.active { left: 0; }
         .menu-item { padding: 15px 20px; color: #90e0ef; border-bottom: 1px solid #1f2937; cursor: pointer; font-weight: 600; font-size: 14px; }
         .menu-item:hover { background: #1e3a8a; color: #fff; }
+
         .avatar-box img { width: 100px; height: 100px; border-radius: 50%; border: 2px solid #00b4d8; box-shadow: 0 0 20px rgba(0, 180, 216, 0.6); margin-bottom: 10px; object-fit: cover; }
         .brand-title { font-size: 26px; font-weight: bold; letter-spacing: 2px; color: #90e0ef; margin-bottom: 5px; }
         .aura-text { font-size: 14px; color: #00f5d4; text-shadow: 0 0 10px rgba(0, 245, 212, 0.7); min-height: 25px; margin-bottom: 20px; font-family: monospace; white-space: nowrap; overflow: hidden; display: inline-block; }
+        
         .section { background: rgba(2, 12, 27, 0.6); border: 1px solid #1d4ed8; border-radius: 10px; padding: 15px; margin-bottom: 15px; text-align: left; display: none; }
         .section.active-tab { display: block; }
         .section h3 { color: #60a5fa; margin-bottom: 10px; font-size: 16px; }
@@ -157,6 +163,7 @@ app.get('*', (req, res) => {
         .btn-success { background: #10b981; color: white; }
         .btn-danger { background: #ef4444; color: white; }
         .btn-warning { background: #f59e0b; color: white; }
+        
         .switch-container { display: flex; justify-content: space-between; align-items: center; }
         .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -164,6 +171,7 @@ app.get('*', (req, res) => {
         .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: #10b981; }
         input:checked + .slider:before { transform: translateX(22px); }
+        
         .result-box { margin-top: 10px; background: #030712; padding: 10px; border-radius: 6px; border: 1px dashed #374151; font-size: 13px; max-height: 250px; overflow-y: auto; word-break: break-all; }
         .key-item { padding: 8px; border-bottom: 1px solid #1f2937; cursor: pointer; }
         .key-item:hover { background: rgba(30, 58, 138, 0.3); }
@@ -174,13 +182,17 @@ app.get('*', (req, res) => {
 </head>
 <body>
     <div class="container">
+        <!-- Nút 3 gạch chuẩn xác -->
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
+        
+        <!-- Sidebar Menu -->
         <div class="sidebar-menu" id="sidebarMenu">
             <div class="menu-item" onclick="switchTab('tabKey')">🔑 KHO KEY & TÌM KIẾM</div>
             <div class="menu-item" onclick="switchTab('tabCreatePremium')">➕ TẠO KEY PREMIUM</div>
             <div class="menu-item" onclick="switchTab('tabCreateTime')">⏳ TẠO KEY THỜI GIAN</div>
             <div class="menu-item" onclick="switchTab('tabSystem')">⚙️ SYSTEM CONTROL</div>
         </div>
+
         <div class="avatar-box">
             <img src="https://cdn.discordapp.com/attachments/1530612413966188584/1544230813690757260/IMG_1109.png?ex=6a97c084&is=6a966f04&hm=859498894699993427601e70647d9489c873b557f711536d9fa1f3bf862c489d&" alt="Bot Avatar">
         </div>
@@ -238,12 +250,20 @@ app.get('*', (req, res) => {
 
     <script>
         window.onload = function() { startTypingEffect(); searchKeys(); };
-        function toggleMenu() { document.getElementById("sidebarMenu").classList.toggle("active"); }
+        
+        // Hàm xử lý mở/đóng menu 3 gạch hoàn chỉnh
+        function toggleMenu() { 
+            let menu = document.getElementById("sidebarMenu");
+            menu.classList.toggle("active"); 
+        }
+
+        // Chuyển tab và tự động ẩn menu sidebar đi cho gọn
         function switchTab(tabId) {
             document.querySelectorAll('.section').forEach(t => t.classList.remove('active-tab'));
             document.getElementById(tabId).classList.add('active-tab');
             toggleMenu();
         }
+
         const textToType = "CHÀO MỪNG ĐẾN VỚI SEVER DUBO HUB";
         let charIndex = 0;
         function startTypingEffect() {
@@ -256,6 +276,7 @@ app.get('*', (req, res) => {
             }
             type();
         }
+
         async function generateKey(type) {
             let discordId, endpoint, fieldId, alertId, payload;
             if (type === 'premium') {
@@ -289,6 +310,7 @@ app.get('*', (req, res) => {
                 } else { alert("Lỗi: " + data.message); }
             } catch(e) { alert("Không kết nối được server!"); }
         }
+
         async function searchKeys() {
             let keyword = document.getElementById("searchKeyword").value.trim();
             let resultBox = document.getElementById("searchResult");
@@ -308,14 +330,14 @@ app.get('*', (req, res) => {
                             let typeBadge = item.type === 'PREMIUM' ? '<span style="color: #38bdf8;">[PREMIUM]</span>' : '<span style="color: #f59e0b;">[TIME]</span>';
                             let statusBadge = item.disabled ? '<span style="color: #ef4444;">[Đã khóa]</span>' : '<span style="color: #10b981;">[Hoạt động]</span>';
                             let neutralizeText = item.disabled ? 'TO REMOVE' : 'TO NEUTRALIZE';
-                            html += '<div class="key-item" onclick="toggleKeyDetails(\\'' + index + '\\')">' +
+                            html += '<div class="key-item" onclick="toggleKeyDetails(\\' ' + index + ' \\')">' +
                                 '<div><b>' + (index + 1) + '. ' + item.key + '</b> ' + typeBadge + ' ' + statusBadge + '</div>' +
                                 '<div style="font-size: 11px; color: #9ca3af;">Discord ID: ' + item.discordId + ' | Info: ' + item.extra + ' | HWID: ' + item.hwid + '</div>' +
                                 '<div class="key-details" id="details-' + index + '" onclick="event.stopPropagation()">' +
                                 '<div style="font-size: 12px; margin-bottom: 5px; color: #60a5fa;">Xác nhận hành động:</div>' +
-                                '<div class="action-box"><input type="text" id="input-del-' + index + '" placeholder="Gõ: DELETE KEY"><button class="btn-danger" onclick="manageKey(\\'' + item.key + '\\', \\'delete\\', \\'input-del-' + index + '\\', \\'DELETE KEY\\')">DELETE</button></div>' +
-                                '<div class="action-box"><input type="text" id="input-reset-' + index + '" placeholder="Gõ: RESET HWID"><button class="btn-warning" onclick="manageKey(\\'' + item.key + '\\', \\'reset_hwid\\', \\'input-reset-' + index + '\\', \\'RESET HWID\\')">HWID</button></div>' +
-                                '<div class="action-box"><input type="text" id="input-neu-' + index + '" placeholder="Gõ: ' + neutralizeText + '"><button class="btn-primary" onclick="manageKey(\\'' + item.key + '\\', \\'neutralize\\', \\'input-neu-' + index + '\\', \\'' + neutralizeText + '\\')">' + neutralizeText + '</button></div>' +
+                                '<div class="action-box"><input type="text" id="input-del-' + index + '" placeholder="Gõ: DELETE KEY"><button class="btn-danger" onclick="manageKey(\\' ' + item.key + ' \\', \\'delete\\', \\'input-del-' + index + '\\', \\'DELETE KEY\\')">DELETE</button></div>' +
+                                '<div class="action-box"><input type="text" id="input-reset-' + index + '" placeholder="Gõ: RESET HWID"><button class="btn-warning" onclick="manageKey(\\' ' + item.key + ' \\', \\'reset_hwid\\', \\'input-reset-' + index + '\\', \\'RESET HWID\\')">HWID</button></div>' +
+                                '<div class="action-box"><input type="text" id="input-neu-' + index + '" placeholder="Gõ: ' + neutralizeText + '"><button class="btn-primary" onclick="manageKey(\\' ' + item.key + ' \\', \\'neutralize\\', \\'input-neu-' + index + '\\', \\'' + neutralizeText + '\\')">' + neutralizeText + '</button></div>' +
                                 '</div></div>';
                         });
                         resultBox.innerHTML = html;
@@ -323,10 +345,12 @@ app.get('*', (req, res) => {
                 } else { resultBox.innerHTML = '<span style="color: #ef4444;">Lỗi từ server!</span>'; }
             } catch(e) { resultBox.innerHTML = '<span style="color: #ef4444;">Lỗi kết nối!</span>'; }
         }
+
         function toggleKeyDetails(index) {
-            let el = document.getElementById('details-' + index);
+            let el = document.getElementById('details-' + index.trim());
             el.style.display = (el.style.display === 'block') ? 'none' : 'block';
         }
+
         async function manageKey(keyStr, actionType, inputId, requiredText) {
             let userTyped = document.getElementById(inputId).value.trim();
             if(userTyped !== requiredText) { alert('Phải gõ chính xác "' + requiredText + '"!'); return; }
@@ -334,13 +358,14 @@ app.get('*', (req, res) => {
                 let res = await fetch('/api/admin/manage-key', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key: keyStr, action: actionType, confirmText: userTyped })
+                    body: JSON.stringify({ key: keyStr.trim(), action: actionType, confirmText: userTyped })
                 });
                 let data = await res.json();
                 if(data.status === 'success') { alert("Thành công!"); searchKeys(); }
                 else { alert("Lỗi: " + data.message); }
             } catch(e) { alert("Lỗi kết nối!"); }
         }
+
         function toggleSystem() {
             let isChecked = document.getElementById("mainSystemSwitch").checked;
             let statusText = document.getElementById("statusText");
