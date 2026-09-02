@@ -1,86 +1,116 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const app = express();
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-const premiumKeys = new Map();
-const timeKeys = new Map();
+// Kết nối MongoDB Atlas
+const mongoURI = "mongodb+srv://phamthucdung04012012_db_user:Dung04/01/2012@cluster0.wurl4c5.mongodb.net/keymanager?retryWrites=true&w=majority&appName=Cluster0";
 
-app.post('/api/admin/create-premium', (req, res) => {
+mongoose.connect(mongoURI)
+  .then(() => console.log("MongoDB Connected Successfully!"))
+  .catch(err => console.error("MongoDB Connection Error:", err));
+
+// Schema chung cho Key tích hợp cả Premium và Time
+const keySchema = new mongoose.Schema({
+    key: { type: String, required: true, unique: true },
+    type: { type: String, required: true }, // 'PREMIUM' hoặc 'TIME'
+    discordId: { type: String, required: true },
+    hwid: { type: String, default: 'None' },
+    disabled: { type: Boolean, default: false },
+    extra: { type: String, default: 'Lifetime' }, // 'Lifetime' hoặc thời gian (VD: 24h, 7d...)
+    createdAt: { type: Date, default: Date.now }
+});
+
+const KeyModel = mongoose.model('KeyData', keySchema);
+
+// API Tạo Key Premium
+app.post('/api/admin/create-premium', async (req, res) => {
     try {
         const { discordId } = req.body;
         if (!discordId) return res.json({ status: 'error', message: 'Thiếu Discord ID!' });
         
         const randomKey = 'DUBO-PREMIUM-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-        premiumKeys.set(randomKey, { discordId, hwid: 'None', disabled: false, extra: 'Lifetime' });
         
+        const newKeyDoc = new KeyModel({
+            key: randomKey,
+            type: 'PREMIUM',
+            discordId: discordId.trim(),
+            hwid: 'None',
+            disabled: false,
+            extra: 'Lifetime'
+        });
+        
+        await newKeyDoc.save();
         res.json({ status: 'success', key: randomKey });
     } catch (e) {
         res.json({ status: 'error', message: e.message });
     }
 });
 
-app.post('/api/admin/create-time', (req, res) => {
+// API Tạo Key Thời Gian
+app.post('/api/admin/create-time', async (req, res) => {
     try {
         const { discordId, duration } = req.body;
         if (!discordId || !duration) return res.json({ status: 'error', message: 'Thiếu thông tin!' });
         
         const randomKey = 'DUBO-TIME-' + Math.random().toString(36).substring(2, 10).toUpperCase();
-        timeKeys.set(randomKey, { discordId, hwid: 'None', disabled: false, extra: duration });
         
+        const newKeyDoc = new KeyModel({
+            key: randomKey,
+            type: 'TIME',
+            discordId: discordId.trim(),
+            hwid: 'None',
+            disabled: false,
+            extra: duration
+        });
+        
+        await newKeyDoc.save();
         res.json({ status: 'success', key: randomKey });
     } catch (e) {
         res.json({ status: 'error', message: e.message });
     }
 });
 
-app.post('/api/admin/search-keys', (req, res) => {
+// API Tra cứu key theo Discord ID trên Database
+app.post('/api/admin/search-keys', async (req, res) => {
     try {
         const { discordId } = req.body;
         if (!discordId) return res.json({ status: 'error', message: 'Thiếu Discord ID!' });
         
-        let foundKeys = [];
-
-        for (let [key, data] of premiumKeys.entries()) {
-            if (data.discordId.trim() === discordId.trim()) {
-                foundKeys.push({ key, type: 'PREMIUM', ...data });
-            }
-        }
-        for (let [key, data] of timeKeys.entries()) {
-            if (data.discordId.trim() === discordId.trim()) {
-                foundKeys.push({ key, type: 'TIME', ...data });
-            }
-        }
-
+        const foundKeys = await KeyModel.find({ discordId: discordId.trim() });
+        
         res.json({ status: 'success', keys: foundKeys });
     } catch (e) {
         res.json({ status: 'error', message: e.message });
     }
 });
 
-app.post('/api/admin/manage-key', (req, res) => {
+// API Quản lý key (Xóa, Reset HWID, Vô hiệu hóa/Xóa hẳn) trên Database
+app.post('/api/admin/manage-key', async (req, res) => {
     try {
         const { key, action, confirmText } = req.body;
-        let targetMap = premiumKeys.has(key) ? premiumKeys : (timeKeys.has(key) ? timeKeys : null);
+        const targetKey = await KeyModel.findOne({ key });
 
-        if (!targetMap) return res.json({ status: 'error', message: 'Không tìm thấy key trên server!' });
-
-        let data = targetMap.get(key);
+        if (!targetKey) return res.json({ status: 'error', message: 'Không tìm thấy key trên server!' });
 
         if (action === 'delete') {
             if (confirmText !== 'DELETE KEY') return res.json({ status: 'error', message: 'Sai chữ xác nhận!' });
-            targetMap.delete(key);
+            await KeyModel.deleteOne({ key });
         } else if (action === 'reset_hwid') {
             if (confirmText !== 'RESET HWID') return res.json({ status: 'error', message: 'Sai chữ xác nhận!' });
-            data.hwid = 'None';
+            targetKey.hwid = 'None';
+            await targetKey.save();
         } else if (action === 'neutralize') {
-            let reqText = data.disabled ? 'TO REMOVE' : 'TO NEUTRALIZE';
+            let reqText = targetKey.disabled ? 'TO REMOVE' : 'TO NEUTRALIZE';
             if (confirmText !== reqText) return res.json({ status: 'error', message: 'Sai chữ xác nhận!' });
             
-            if (data.disabled) {
-                targetMap.delete(key);
+            if (targetKey.disabled) {
+                await KeyModel.deleteOne({ key });
             } else {
-                data.disabled = true;
+                targetKey.disabled = true;
+                await targetKey.save();
             }
         }
 
@@ -90,7 +120,9 @@ app.post('/api/admin/manage-key', (req, res) => {
     }
 });
 
+// Giao diện web tối ưu mobile, chống tràn khung, có Sidebar, hiệu ứng gõ chữ và đầy đủ chức năng quản trị
 app.get('*', (req, res) => {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,7 +131,7 @@ app.get('*', (req, res) => {
     <title>DUBO HUB - Secure Private Gateway</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: linear-gradient(135deg, #0a192f, #020c1b); color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 10px; }
+        body { background: linear-gradient(135deg, #0a192f, #020c1b); color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px 10px; }
         .container { width: 100%; max-width: 850px; background: rgba(10, 25, 47, 0.85); border: 1px solid #1e3a8a; border-radius: 15px; padding: 20px; box-shadow: 0 0 25px rgba(0, 149, 255, 0.3); text-align: center; position: relative; }
         .menu-btn { position: absolute; top: 15px; left: 15px; background: #1e3a8a; border: 1px solid #3b82f6; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 18px; z-index: 10; }
         .sidebar-menu { position: absolute; top: 0; left: -280px; width: 270px; height: 100%; background: #030712; border-right: 1px solid #1e3a8a; transition: 0.3s; z-index: 20; display: flex; flex-direction: column; padding-top: 60px; border-top-left-radius: 15px; border-bottom-left-radius: 15px; text-align: left; }
@@ -126,7 +158,7 @@ app.get('*', (req, res) => {
         .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: #10b981; }
         input:checked + .slider:before { transform: translateX(22px); }
-        .result-box { margin-top: 10px; background: #030712; padding: 10px; border-radius: 6px; border: 1px dashed #374151; font-size: 13px; max-height: 250px; overflow-y: auto; }
+        .result-box { margin-top: 10px; background: #030712; padding: 10px; border-radius: 6px; border: 1px dashed #374151; font-size: 13px; max-height: 250px; overflow-y: auto; word-break: break-all; }
         .key-item { padding: 8px; border-bottom: 1px solid #1f2937; cursor: pointer; }
         .key-item:hover { background: rgba(30, 58, 138, 0.3); }
         .key-details { display: none; margin-top: 8px; padding: 8px; background: #020c1b; border-radius: 6px; border: 1px solid #374151; }
@@ -169,7 +201,7 @@ app.get('*', (req, res) => {
                 <input type="text" id="generatedKeyFieldPrem" placeholder="Bấm nút Random bên dưới..." readonly>
                 <button class="btn-success" onclick="generateKey('premium')">Random & Save</button>
             </div>
-            <div class="success-alert" id="createSuccessAlertPrem">✅ ĐÃ TẠO VÀ ĐƯA THẲNG VÀO KHO!</div>
+            <div class="success-alert" id="createSuccessAlertPrem">✅ ĐÃ TẠO VÀ ĐƯA THẲNG VÀO DATABASE!</div>
         </div>
 
         <div id="tabCreateTime" class="section">
@@ -184,7 +216,7 @@ app.get('*', (req, res) => {
                 <input type="text" id="generatedKeyFieldTime" placeholder="Bấm nút Random bên dưới..." readonly>
                 <button class="btn-success" onclick="generateKey('time')">Random & Save</button>
             </div>
-            <div class="success-alert" id="createSuccessAlertTime">✅ ĐÃ TẠO VÀ ĐƯA THẲNG VÀO KHO!</div>
+            <div class="success-alert" id="createSuccessAlertTime">✅ ĐÃ TẠO VÀ ĐƯA THẲNG VÀO DATABASE!</div>
         </div>
 
         <div id="tabSystem" class="section">
@@ -256,7 +288,7 @@ app.get('*', (req, res) => {
             let searchId = document.getElementById("searchDiscordId").value.trim();
             let resultBox = document.getElementById("searchResult");
             if(!searchId) { resultBox.innerHTML = "<span style='color: #ef4444;'>Vui lòng nhập Discord ID!</span>"; return; }
-            resultBox.innerHTML = '<span style="color: #60a5fa;">Đang tra cứu...</span>';
+            resultBox.innerHTML = '<span style="color: #60a5fa;">Đang tra cứu database...</span>';
             try {
                 let res = await fetch('/api/admin/search-keys', {
                     method: 'POST',
@@ -266,7 +298,7 @@ app.get('*', (req, res) => {
                 let data = await res.json();
                 if(data.status === 'success') {
                     if(data.keys.length === 0) {
-                        resultBox.innerHTML = '<span style="color: #f59e0b;">Không tìm thấy key nào!</span>';
+                        resultBox.innerHTML = '<span style="color: #f59e0b;">Không tìm thấy key nào trong database!</span>';
                     } else {
                         let html = '<b style="color: #10b981;">Tìm thấy ' + data.keys.length + ' key:</b><br><br>';
                         data.keys.forEach((item, index) => {
