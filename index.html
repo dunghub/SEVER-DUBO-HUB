@@ -12,7 +12,7 @@ mongoose.connect(mongoURI)
   .then(() => console.log("MongoDB Connected Successfully!"))
   .catch(err => console.error("MongoDB Connection Error:", err));
 
-// Schema chung cho Key tích hợp cả Premium và Time
+// Schema chung cho Key
 const keySchema = new mongoose.Schema({
     key: { type: String, required: true, unique: true },
     type: { type: String, required: true },
@@ -126,120 +126,133 @@ app.post('/api/admin/manage-key', async (req, res) => {
     }
 });
 
-// Giao diện web tối ưu mobile tích hợp Thanh tìm kiếm Key và Menu Sidebar chuẩn xác
+// Giao diện web chính cực kỳ đẹp mắt, tối ưu mobile và mượt mà
 app.get('*', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(`<!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DUBO HUB - Secure Private Gateway</title>
+    <title>DUBO HUB - Secure Management</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: linear-gradient(135deg, #0a192f, #020c1b); color: #ffffff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px 10px; overflow-x: hidden; }
-        .container { width: 100%; max-width: 850px; background: rgba(10, 25, 47, 0.85); border: 1px solid #1e3a8a; border-radius: 15px; padding: 20px; box-shadow: 0 0 25px rgba(0, 149, 255, 0.3); text-align: center; position: relative; }
+        body { background: radial-gradient(circle at center, #0f172a, #020617); color: #f8fafc; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 15px; overflow-x: hidden; }
+        .container { width: 100%; max-width: 800px; background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(12px); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 20px; padding: 25px; box-shadow: 0 0 40px rgba(14, 165, 233, 0.15); text-align: center; position: relative; }
         
-        /* Nút 3 gạch */
-        .menu-btn { position: absolute; top: 15px; left: 15px; background: #1e3a8a; border: 1px solid #3b82f6; color: #fff; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 18px; z-index: 100; }
-        
-        /* Menu Sidebar */
-        .sidebar-menu { position: fixed; top: 0; left: -280px; width: 270px; height: 100%; background: #030712; border-right: 1px solid #1e3a8a; transition: 0.3s ease-in-out; z-index: 99; display: flex; flex-direction: column; padding-top: 70px; text-align: left; box-shadow: 5px 0 15px rgba(0,0,0,0.5); }
-        .sidebar-menu.active { left: 0; }
-        .menu-item { padding: 15px 20px; color: #90e0ef; border-bottom: 1px solid #1f2937; cursor: pointer; font-weight: 600; font-size: 14px; }
-        .menu-item:hover { background: #1e3a8a; color: #fff; }
+        /* Menu Button */
+        .menu-btn { position: absolute; top: 20px; left: 20px; background: linear-gradient(135deg, #0284c7, #0369a1); border: none; color: #fff; width: 42px; height: 42px; border-radius: 10px; cursor: pointer; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3); transition: 0.2s; z-index: 100; }
+        .menu-btn:active { transform: scale(0.92); }
 
-        .avatar-box img { width: 100px; height: 100px; border-radius: 50%; border: 2px solid #00b4d8; box-shadow: 0 0 20px rgba(0, 180, 216, 0.6); margin-bottom: 10px; object-fit: cover; }
-        .brand-title { font-size: 26px; font-weight: bold; letter-spacing: 2px; color: #90e0ef; margin-bottom: 5px; }
-        .aura-text { font-size: 14px; color: #00f5d4; text-shadow: 0 0 10px rgba(0, 245, 212, 0.7); min-height: 25px; margin-bottom: 20px; font-family: monospace; white-space: nowrap; overflow: hidden; display: inline-block; }
+        /* Sidebar */
+        .sidebar-menu { position: fixed; top: 0; left: -300px; width: 280px; height: 100%; background: #020617; border-right: 1px solid rgba(56, 189, 248, 0.2); transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1); z-index: 99; display: flex; flex-direction: column; padding-top: 80px; text-align: left; box-shadow: 10px 0 30px rgba(0,0,0,0.8); }
+        .sidebar-menu.active { left: 0; }
+        .menu-item { padding: 16px 22px; color: #7dd3fc; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; font-weight: 600; font-size: 14px; transition: 0.2s; display: flex; align-items: center; gap: 10px; }
+        .menu-item:hover { background: rgba(56, 189, 248, 0.1); color: #fff; padding-left: 26px; }
+
+        /* Profile & Header */
+        .avatar-box img { width: 90px; height: 90px; border-radius: 50%; border: 3px solid #38bdf8; box-shadow: 0 0 25px rgba(56, 189, 248, 0.4); margin-bottom: 12px; object-fit: cover; }
+        .brand-title { font-size: 28px; font-weight: 800; letter-spacing: 3px; background: linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 5px; }
+        .aura-text { font-size: 13px; color: #2dd4bf; text-shadow: 0 0 12px rgba(45, 212, 191, 0.5); min-height: 25px; margin-bottom: 25px; font-family: monospace; }
+
+        /* Sections */
+        .section { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 14px; padding: 20px; margin-bottom: 15px; text-align: left; display: none; backdrop-filter: blur(5px); }
+        .section.active-tab { display: block; animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         
-        .section { background: rgba(2, 12, 27, 0.6); border: 1px solid #1d4ed8; border-radius: 10px; padding: 15px; margin-bottom: 15px; text-align: left; display: none; }
-        .section.active-tab { display: block; }
-        .section h3 { color: #60a5fa; margin-bottom: 10px; font-size: 16px; }
-        .control-row { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; width: 100%; }
-        input[type="text"] { width: 100%; flex: 1; padding: 10px; background: #030712; border: 1px solid #3b82f6; border-radius: 6px; color: #fff; outline: none; font-size: 14px; }
-        button { padding: 10px 15px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; white-space: nowrap; font-size: 14px; }
-        .btn-primary { background: #2563eb; color: white; }
-        .btn-success { background: #10b981; color: white; }
-        .btn-danger { background: #ef4444; color: white; }
-        .btn-warning { background: #f59e0b; color: white; }
+        .section h3 { color: #38bdf8; margin-bottom: 14px; font-size: 16px; font-weight: 700; letter-spacing: 0.5px; }
+        .control-row { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; width: 100%; }
         
-        .switch-container { display: flex; justify-content: space-between; align-items: center; }
-        .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        input[type="text"] { width: 100%; flex: 1; padding: 12px 14px; background: #020617; border: 1px solid rgba(56, 189, 248, 0.3); border-radius: 10px; color: #fff; outline: none; font-size: 14px; transition: 0.2s; }
+        input[type="text"]:focus { border-color: #38bdf8; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
+        
+        button { padding: 12px 18px; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; white-space: nowrap; font-size: 14px; transition: 0.2s; }
+        button:active { transform: scale(0.96); }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: white; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); }
+        .btn-danger { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; }
+        .btn-warning { background: linear-gradient(135deg, #f59e0b, #d97706); color: white; }
+        .btn-primary { background: linear-gradient(135deg, #3b82f6, #2563eb); color: white; }
+
+        /* Switch System */
+        .switch-container { display: flex; justify-content: space-between; align-items: center; background: #020617; padding: 15px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.05); }
+        .switch { position: relative; display: inline-block; width: 54px; height: 30px; }
         .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #374151; transition: .4s; border-radius: 28px; }
-        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .3s; border-radius: 30px; }
+        .slider:before { position: absolute; content: ""; height: 22px; width: 22px; left: 4px; bottom: 4px; background-color: white; transition: .3s; border-radius: 50%; }
         input:checked + .slider { background-color: #10b981; }
-        input:checked + .slider:before { transform: translateX(22px); }
-        
-        .result-box { margin-top: 10px; background: #030712; padding: 10px; border-radius: 6px; border: 1px dashed #374151; font-size: 13px; max-height: 250px; overflow-y: auto; word-break: break-all; }
-        .key-item { padding: 8px; border-bottom: 1px solid #1f2937; cursor: pointer; }
-        .key-item:hover { background: rgba(30, 58, 138, 0.3); }
-        .key-details { display: none; margin-top: 8px; padding: 8px; background: #020c1b; border-radius: 6px; border: 1px solid #374151; }
-        .action-box { margin-top: 6px; display: flex; gap: 6px; align-items: center; }
-        .success-alert { color: #10b981; font-weight: bold; margin-top: 8px; display: none; font-size: 13px; }
+        input:checked + .slider:before { transform: translateX(24px); }
+
+        /* Search & Results */
+        .result-box { margin-top: 12px; background: #020617; padding: 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.08); font-size: 13px; max-height: 280px; overflow-y: auto; word-break: break-all; }
+        .key-item { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); cursor: pointer; border-radius: 6px; transition: 0.2s; margin-bottom: 4px; }
+        .key-item:hover { background: rgba(56, 189, 248, 0.08); }
+        .key-details { display: none; margin-top: 10px; padding: 10px; background: #0f172a; border-radius: 8px; border: 1px solid rgba(56, 189, 248, 0.2); }
+        .action-box { margin-top: 8px; display: flex; gap: 8px; align-items: center; }
+        .success-alert { color: #34d399; font-weight: bold; margin-top: 10px; display: none; font-size: 13px; background: rgba(16, 185, 129, 0.1); padding: 8px; border-radius: 6px; border: 1px solid rgba(16, 185, 129, 0.3); }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Nút 3 gạch chuẩn xác -->
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
         
-        <!-- Sidebar Menu -->
         <div class="sidebar-menu" id="sidebarMenu">
-            <div class="menu-item" onclick="switchTab('tabKey')">🔑 KHO KEY & TÌM KIẾM</div>
-            <div class="menu-item" onclick="switchTab('tabCreatePremium')">➕ TẠO KEY PREMIUM</div>
-            <div class="menu-item" onclick="switchTab('tabCreateTime')">⏳ TẠO KEY THỜI GIAN</div>
-            <div class="menu-item" onclick="switchTab('tabSystem')">⚙️ SYSTEM CONTROL</div>
+            <div class="menu-item" onclick="switchTab('tabKey')">🔑 Kho Key & Tìm Kiếm</div>
+            <div class="menu-item" onclick="switchTab('tabCreatePremium')">➕ Tạo Key Premium</div>
+            <div class="menu-item" onclick="switchTab('tabCreateTime')">⏳ Tạo Key Thời Gian</div>
+            <div class="menu-item" onclick="switchTab('tabSystem')">⚙️ System Control</div>
         </div>
 
         <div class="avatar-box">
-            <img src="https://cdn.discordapp.com/attachments/1530612413966188584/1544230813690757260/IMG_1109.png?ex=6a97c084&is=6a966f04&hm=859498894699993427601e70647d9489c873b557f711536d9fa1f3bf862c489d&" alt="Bot Avatar">
+            <img src="https://cdn.discordapp.com/attachments/1530612413966188584/1544230813690757260/IMG_1109.png?ex=6a97c084&is=6a966f04&hm=859498894699993427601e70647d9489c873b557f711536d9fa1f3bf862c489d&" alt="Avatar">
         </div>
         <div class="brand-title">DUBO HUB</div>
         <div><span class="aura-text" id="typedText"></span></div>
 
+        <!-- Tab Kho Key & Tìm Kiếm -->
         <div id="tabKey" class="section active-tab">
-            <h3>TRA CỨU & THANH TÌM KIẾM KEY</h3>
+            <h3>TRA CỨU & QUẢN LÝ KEY</h3>
             <div class="control-row">
-                <input type="text" id="searchKeyword" placeholder="Nhập mã Key hoặc Discord ID cần tìm..." oninput="searchKeys()">
+                <input type="text" id="searchKeyword" placeholder="Nhập mã Key hoặc Discord ID để tìm..." oninput="searchKeys()">
             </div>
             <div class="result-box" id="searchResult">
-                <span style="color: #6b7280;">Nhập từ khóa để tìm kiếm key trực tiếp...</span>
+                <span style="color: #64748b;">Nhập từ khóa để tra cứu trực tiếp từ Database...</span>
             </div>
         </div>
 
+        <!-- Tab Tạo Key Premium -->
         <div id="tabCreatePremium" class="section">
-            <h3>➕ TẠO KEY PREMIUM MỚI</h3>
+            <h3>TẠO KEY PREMIUM MỚI</h3>
             <div class="control-row">
-                <input type="text" id="targetDiscordIdPrem" placeholder="Nhập Discord ID bắt buộc gắn...">
+                <input type="text" id="targetDiscordIdPrem" placeholder="Nhập Discord ID của người dùng...">
             </div>
             <div class="control-row">
-                <input type="text" id="generatedKeyFieldPrem" placeholder="Bấm nút Random bên dưới..." readonly>
-                <button class="btn-success" onclick="generateKey('premium')">Random & Save</button>
+                <input type="text" id="generatedKeyFieldPrem" placeholder="Key sẽ hiển thị ở đây..." readonly>
+                <button class="btn-success" onclick="generateKey('premium')">Tạo Key</button>
             </div>
-            <div class="success-alert" id="createSuccessAlertPrem">✅ ĐÃ TẠO VÀ ĐƯA THẲNG VÀO DATABASE!</div>
+            <div class="success-alert" id="createSuccessAlertPrem">✨ Đã tạo và lưu thành công vào MongoDB Atlas!</div>
         </div>
 
+        <!-- Tab Tạo Key Thời Gian -->
         <div id="tabCreateTime" class="section">
-            <h3>⏳ TẠO KEY THỜI GIAN MỚI</h3>
+            <h3>TẠO KEY THỜI GIAN MỚI</h3>
             <div class="control-row">
-                <input type="text" id="targetDiscordIdTime" placeholder="Nhập Discord ID bắt buộc gắn...">
+                <input type="text" id="targetDiscordIdTime" placeholder="Nhập Discord ID của người dùng...">
             </div>
             <div class="control-row">
-                <input type="text" id="durationInput" placeholder="Nhập thời gian (VD: 24h, 7d, 30d)...">
+                <input type="text" id="durationInput" placeholder="Thời gian (VD: 24h, 7d, 30d)...">
             </div>
             <div class="control-row">
-                <input type="text" id="generatedKeyFieldTime" placeholder="Bấm nút Random bên dưới..." readonly>
-                <button class="btn-success" onclick="generateKey('time')">Random & Save</button>
+                <input type="text" id="generatedKeyFieldTime" placeholder="Key sẽ hiển thị ở đây..." readonly>
+                <button class="btn-success" onclick="generateKey('time')">Tạo Key</button>
             </div>
-            <div class="success-alert" id="createSuccessAlertTime">✅ ĐÃ TẠO VÀ ĐƯA THẲNG VÀO DATABASE!</div>
+            <div class="success-alert" id="createSuccessAlertTime">✨ Đã tạo và lưu thành công vào MongoDB Atlas!</div>
         </div>
 
+        <!-- Tab System Control -->
         <div id="tabSystem" class="section">
-            <h3>System Main Switch</h3>
+            <h3>HỆ THỐNG ĐIỀU KHIỂN CHÍNH</h3>
             <div class="switch-container">
-                <span id="statusText" style="color: #10b981; font-weight: bold; font-size: 14px;">System is ONLINE</span>
+                <span id="statusText" style="color: #34d399; font-weight: bold; font-size: 14px;">System is ONLINE</span>
                 <label class="switch">
                     <input type="checkbox" id="mainSystemSwitch" checked onchange="toggleSystem()">
                     <span class="slider"></span>
@@ -251,27 +264,24 @@ app.get('*', (req, res) => {
     <script>
         window.onload = function() { startTypingEffect(); searchKeys(); };
         
-        // Hàm xử lý mở/đóng menu 3 gạch hoàn chỉnh
         function toggleMenu() { 
-            let menu = document.getElementById("sidebarMenu");
-            menu.classList.toggle("active"); 
+            document.getElementById("sidebarMenu").classList.toggle("active"); 
         }
 
-        // Chuyển tab và tự động ẩn menu sidebar đi cho gọn
         function switchTab(tabId) {
             document.querySelectorAll('.section').forEach(t => t.classList.remove('active-tab'));
             document.getElementById(tabId).classList.add('active-tab');
             toggleMenu();
         }
 
-        const textToType = "CHÀO MỪNG ĐẾN VỚI SEVER DUBO HUB";
+        const textToType = "CHÀO MỪNG ĐẾN VỚI HỆ THỐNG DUBO HUB";
         let charIndex = 0;
         function startTypingEffect() {
             function type() {
                 if (charIndex < textToType.length) {
                     document.getElementById("typedText").innerHTML += textToType.charAt(charIndex);
                     charIndex++;
-                    setTimeout(type, 100);
+                    setTimeout(type, 90);
                 }
             }
             type();
@@ -323,42 +333,42 @@ app.get('*', (req, res) => {
                 let data = await res.json();
                 if(data.status === 'success') {
                     if(data.keys.length === 0) {
-                        resultBox.innerHTML = '<span style="color: #f59e0b;">Không tìm thấy key phù hợp!</span>';
+                        resultBox.innerHTML = '<span style="color: #fbbf24;">Không tìm thấy key phù hợp!</span>';
                     } else {
-                        let html = '<b style="color: #10b981;">Tìm thấy ' + data.keys.length + ' kết quả:</b><br><br>';
+                        let html = '<b style="color: #34d399;">Tìm thấy ' + data.keys.length + ' kết quả:</b><br><br>';
                         data.keys.forEach((item, index) => {
-                            let typeBadge = item.type === 'PREMIUM' ? '<span style="color: #38bdf8;">[PREMIUM]</span>' : '<span style="color: #f59e0b;">[TIME]</span>';
-                            let statusBadge = item.disabled ? '<span style="color: #ef4444;">[Đã khóa]</span>' : '<span style="color: #10b981;">[Hoạt động]</span>';
+                            let typeBadge = item.type === 'PREMIUM' ? '<span style="color: #38bdf8;">[PREMIUM]</span>' : '<span style="color: #fbbf24;">[TIME]</span>';
+                            let statusBadge = item.disabled ? '<span style="color: #f87171;">[Đã khóa]</span>' : '<span style="color: #34d399;">[Hoạt động]</span>';
                             let neutralizeText = item.disabled ? 'TO REMOVE' : 'TO NEUTRALIZE';
-                            html += '<div class="key-item" onclick="toggleKeyDetails(\\' ' + index + ' \\')">' +
+                            html += '<div class="key-item" onclick="toggleKeyDetails(' + index + ')">' +
                                 '<div><b>' + (index + 1) + '. ' + item.key + '</b> ' + typeBadge + ' ' + statusBadge + '</div>' +
-                                '<div style="font-size: 11px; color: #9ca3af;">Discord ID: ' + item.discordId + ' | Info: ' + item.extra + ' | HWID: ' + item.hwid + '</div>' +
+                                '<div style="font-size: 11px; color: #94a3b8; margin-top: 3px;">Discord ID: ' + item.discordId + ' | Info: ' + item.extra + ' | HWID: ' + item.hwid + '</div>' +
                                 '<div class="key-details" id="details-' + index + '" onclick="event.stopPropagation()">' +
-                                '<div style="font-size: 12px; margin-bottom: 5px; color: #60a5fa;">Xác nhận hành động:</div>' +
-                                '<div class="action-box"><input type="text" id="input-del-' + index + '" placeholder="Gõ: DELETE KEY"><button class="btn-danger" onclick="manageKey(\\' ' + item.key + ' \\', \\'delete\\', \\'input-del-' + index + '\\', \\'DELETE KEY\\')">DELETE</button></div>' +
-                                '<div class="action-box"><input type="text" id="input-reset-' + index + '" placeholder="Gõ: RESET HWID"><button class="btn-warning" onclick="manageKey(\\' ' + item.key + ' \\', \\'reset_hwid\\', \\'input-reset-' + index + '\\', \\'RESET HWID\\')">HWID</button></div>' +
-                                '<div class="action-box"><input type="text" id="input-neu-' + index + '" placeholder="Gõ: ' + neutralizeText + '"><button class="btn-primary" onclick="manageKey(\\' ' + item.key + ' \\', \\'neutralize\\', \\'input-neu-' + index + '\\', \\'' + neutralizeText + '\\')">' + neutralizeText + '</button></div>' +
+                                '<div style="font-size: 12px; margin-bottom: 6px; color: #60a5fa;">Hành động quản trị:</div>' +
+                                '<div class="action-box"><input type="text" id="input-del-' + index + '" placeholder="Gõ: DELETE KEY"><button class="btn-danger" onclick="manageKey(\\'' + item.key + '\\', \\'delete\\', \\'input-del-' + index + '\\', \\'DELETE KEY\\')">Xóa</button></div>' +
+                                '<div class="action-box"><input type="text" id="input-reset-' + index + '" placeholder="Gõ: RESET HWID"><button class="btn-warning" onclick="manageKey(\\'' + item.key + '\\', \\'reset_hwid\\', \\'input-reset-' + index + '\\', \\'RESET HWID\\')">Reset HWID</button></div>' +
+                                '<div class="action-box"><input type="text" id="input-neu-' + index + '" placeholder="Gõ: ' + neutralizeText + '"><button class="btn-primary" onclick="manageKey(\\'' + item.key + '\\', \\'neutralize\\', \\'input-neu-' + index + '\\', \\'' + neutralizeText + '\\')">' + neutralizeText + '</button></div>' +
                                 '</div></div>';
                         });
                         resultBox.innerHTML = html;
                     }
-                } else { resultBox.innerHTML = '<span style="color: #ef4444;">Lỗi từ server!</span>'; }
-            } catch(e) { resultBox.innerHTML = '<span style="color: #ef4444;">Lỗi kết nối!</span>'; }
+                } else { resultBox.innerHTML = '<span style="color: #f87171;">Lỗi từ server!</span>'; }
+            } catch(e) { resultBox.innerHTML = '<span style="color: #f87171;">Lỗi kết nối server!</span>'; }
         }
 
         function toggleKeyDetails(index) {
-            let el = document.getElementById('details-' + index.trim());
+            let el = document.getElementById('details-' + index);
             el.style.display = (el.style.display === 'block') ? 'none' : 'block';
         }
 
         async function manageKey(keyStr, actionType, inputId, requiredText) {
             let userTyped = document.getElementById(inputId).value.trim();
-            if(userTyped !== requiredText) { alert('Phải gõ chính xác "' + requiredText + '"!'); return; }
+            if(userTyped !== requiredText) { alert('Phải gõ chính xác "' + requiredText + '" để xác nhận!'); return; }
             try {
                 let res = await fetch('/api/admin/manage-key', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ key: keyStr.trim(), action: actionType, confirmText: userTyped })
+                    body: JSON.stringify({ key: keyStr, action: actionType, confirmText: userTyped })
                 });
                 let data = await res.json();
                 if(data.status === 'success') { alert("Thành công!"); searchKeys(); }
@@ -369,8 +379,8 @@ app.get('*', (req, res) => {
         function toggleSystem() {
             let isChecked = document.getElementById("mainSystemSwitch").checked;
             let statusText = document.getElementById("statusText");
-            if(isChecked) { statusText.innerText = "System is ONLINE"; statusText.style.color = "#10b981"; }
-            else { statusText.innerText = "System is OFFLINE"; statusText.style.color = "#ef4444"; }
+            if(isChecked) { statusText.innerText = "System is ONLINE"; statusText.style.color = "#34d399"; }
+            else { statusText.innerText = "System is OFFLINE"; statusText.style.color = "#f87171"; }
         }
     </script>
 </body>
