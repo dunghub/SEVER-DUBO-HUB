@@ -15,11 +15,11 @@ mongoose.connect(mongoURI)
 // Schema chung cho Key tích hợp cả Premium và Time
 const keySchema = new mongoose.Schema({
     key: { type: String, required: true, unique: true },
-    type: { type: String, required: true }, // 'PREMIUM' hoặc 'TIME'
+    type: { type: String, required: true },
     discordId: { type: String, required: true },
     hwid: { type: String, default: 'None' },
     disabled: { type: Boolean, default: false },
-    extra: { type: String, default: 'Lifetime' }, // 'Lifetime' hoặc thời gian (VD: 24h, 7d...)
+    extra: { type: String, default: 'Lifetime' },
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -73,21 +73,27 @@ app.post('/api/admin/create-time', async (req, res) => {
     }
 });
 
-// API Tra cứu key theo Discord ID trên Database
+// API Tìm kiếm key trực tiếp
 app.post('/api/admin/search-keys', async (req, res) => {
     try {
-        const { discordId } = req.body;
-        if (!discordId) return res.json({ status: 'error', message: 'Thiếu Discord ID!' });
+        const { keyword } = req.body;
+        let query = {};
         
-        const foundKeys = await KeyModel.find({ discordId: discordId.trim() });
+        if (keyword && keyword.trim() !== '') {
+            query.$or = [
+                { key: { $regex: keyword.trim(), $options: 'i' } },
+                { discordId: { $regex: keyword.trim(), $options: 'i' } }
+            ];
+        }
         
+        const foundKeys = await KeyModel.find(query).limit(50);
         res.json({ status: 'success', keys: foundKeys });
     } catch (e) {
         res.json({ status: 'error', message: e.message });
     }
 });
 
-// API Quản lý key (Xóa, Reset HWID, Vô hiệu hóa/Xóa hẳn) trên Database
+// API Quản lý key (Xóa, Reset HWID, Vô hiệu hóa)
 app.post('/api/admin/manage-key', async (req, res) => {
     try {
         const { key, action, confirmText } = req.body;
@@ -120,7 +126,7 @@ app.post('/api/admin/manage-key', async (req, res) => {
     }
 });
 
-// Giao diện web tối ưu mobile, chống tràn khung, có Sidebar, hiệu ứng gõ chữ và đầy đủ chức năng quản trị
+// Giao diện web tối ưu mobile tích hợp Thanh tìm kiếm Key
 app.get('*', (req, res) => {
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(`<!DOCTYPE html>
@@ -170,7 +176,7 @@ app.get('*', (req, res) => {
     <div class="container">
         <button class="menu-btn" onclick="toggleMenu()">☰</button>
         <div class="sidebar-menu" id="sidebarMenu">
-            <div class="menu-item" onclick="switchTab('tabKey')">🔑 KHO KEY PREMIUM & THỜI GIAN</div>
+            <div class="menu-item" onclick="switchTab('tabKey')">🔑 KHO KEY & TÌM KIẾM</div>
             <div class="menu-item" onclick="switchTab('tabCreatePremium')">➕ TẠO KEY PREMIUM</div>
             <div class="menu-item" onclick="switchTab('tabCreateTime')">⏳ TẠO KEY THỜI GIAN</div>
             <div class="menu-item" onclick="switchTab('tabSystem')">⚙️ SYSTEM CONTROL</div>
@@ -182,13 +188,12 @@ app.get('*', (req, res) => {
         <div><span class="aura-text" id="typedText"></span></div>
 
         <div id="tabKey" class="section active-tab">
-            <h3>TRA CỨU KEY THEO DISCORD ID</h3>
+            <h3>TRA CỨU & THANH TÌM KIẾM KEY</h3>
             <div class="control-row">
-                <input type="text" id="searchDiscordId" placeholder="Nhập Discord ID người mua...">
-                <button class="btn-primary" onclick="searchKeysByDiscordId()">Search Server</button>
+                <input type="text" id="searchKeyword" placeholder="Nhập mã Key hoặc Discord ID cần tìm..." oninput="searchKeys()">
             </div>
             <div class="result-box" id="searchResult">
-                <span style="color: #6b7280;">Nhập Discord ID để xem toàn bộ key...</span>
+                <span style="color: #6b7280;">Nhập từ khóa để tìm kiếm key trực tiếp...</span>
             </div>
         </div>
 
@@ -232,7 +237,7 @@ app.get('*', (req, res) => {
     </div>
 
     <script>
-        window.onload = function() { startTypingEffect(); };
+        window.onload = function() { startTypingEffect(); searchKeys(); };
         function toggleMenu() { document.getElementById("sidebarMenu").classList.toggle("active"); }
         function switchTab(tabId) {
             document.querySelectorAll('.section').forEach(t => t.classList.remove('active-tab'));
@@ -284,30 +289,28 @@ app.get('*', (req, res) => {
                 } else { alert("Lỗi: " + data.message); }
             } catch(e) { alert("Không kết nối được server!"); }
         }
-        async function searchKeysByDiscordId() {
-            let searchId = document.getElementById("searchDiscordId").value.trim();
+        async function searchKeys() {
+            let keyword = document.getElementById("searchKeyword").value.trim();
             let resultBox = document.getElementById("searchResult");
-            if(!searchId) { resultBox.innerHTML = "<span style='color: #ef4444;'>Vui lòng nhập Discord ID!</span>"; return; }
-            resultBox.innerHTML = '<span style="color: #60a5fa;">Đang tra cứu database...</span>';
             try {
                 let res = await fetch('/api/admin/search-keys', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ discordId: searchId })
+                    body: JSON.stringify({ keyword: keyword })
                 });
                 let data = await res.json();
                 if(data.status === 'success') {
                     if(data.keys.length === 0) {
-                        resultBox.innerHTML = '<span style="color: #f59e0b;">Không tìm thấy key nào trong database!</span>';
+                        resultBox.innerHTML = '<span style="color: #f59e0b;">Không tìm thấy key phù hợp!</span>';
                     } else {
-                        let html = '<b style="color: #10b981;">Tìm thấy ' + data.keys.length + ' key:</b><br><br>';
+                        let html = '<b style="color: #10b981;">Tìm thấy ' + data.keys.length + ' kết quả:</b><br><br>';
                         data.keys.forEach((item, index) => {
                             let typeBadge = item.type === 'PREMIUM' ? '<span style="color: #38bdf8;">[PREMIUM]</span>' : '<span style="color: #f59e0b;">[TIME]</span>';
                             let statusBadge = item.disabled ? '<span style="color: #ef4444;">[Đã khóa]</span>' : '<span style="color: #10b981;">[Hoạt động]</span>';
                             let neutralizeText = item.disabled ? 'TO REMOVE' : 'TO NEUTRALIZE';
                             html += '<div class="key-item" onclick="toggleKeyDetails(\\'' + index + '\\')">' +
                                 '<div><b>' + (index + 1) + '. ' + item.key + '</b> ' + typeBadge + ' ' + statusBadge + '</div>' +
-                                '<div style="font-size: 11px; color: #9ca3af;">Info: ' + item.extra + ' | HWID: ' + item.hwid + '</div>' +
+                                '<div style="font-size: 11px; color: #9ca3af;">Discord ID: ' + item.discordId + ' | Info: ' + item.extra + ' | HWID: ' + item.hwid + '</div>' +
                                 '<div class="key-details" id="details-' + index + '" onclick="event.stopPropagation()">' +
                                 '<div style="font-size: 12px; margin-bottom: 5px; color: #60a5fa;">Xác nhận hành động:</div>' +
                                 '<div class="action-box"><input type="text" id="input-del-' + index + '" placeholder="Gõ: DELETE KEY"><button class="btn-danger" onclick="manageKey(\\'' + item.key + '\\', \\'delete\\', \\'input-del-' + index + '\\', \\'DELETE KEY\\')">DELETE</button></div>' +
@@ -334,7 +337,7 @@ app.get('*', (req, res) => {
                     body: JSON.stringify({ key: keyStr, action: actionType, confirmText: userTyped })
                 });
                 let data = await res.json();
-                if(data.status === 'success') { alert("Thành công!"); searchKeysByDiscordId(); }
+                if(data.status === 'success') { alert("Thành công!"); searchKeys(); }
                 else { alert("Lỗi: " + data.message); }
             } catch(e) { alert("Lỗi kết nối!"); }
         }
