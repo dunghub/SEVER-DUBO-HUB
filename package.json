@@ -1,0 +1,8 @@
+{
+  "name": "dubo-key-server",
+  "version": "1.0.0",
+  "main": "api/check-key.js",
+  "dependencies": {
+    "mongodb": "^6.8.0"
+  }
+}
