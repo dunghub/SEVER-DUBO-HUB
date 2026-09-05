@@ -1,8 +1,10 @@
 const { MongoClient } = require('mongodb');
 const crypto = require('crypto');
+const fetch = require('node-fetch');
 
 const uri = process.env.MONGODB_URI;
 const SECRET_AUTH_TOKEN = process.env.SECRET_AUTH_TOKEN; 
+const LAYMA_API_TOKEN = process.env.LAYMA_API_TOKEN;
 let cachedClient = null;
 
 async function connectToDatabase() {
@@ -20,11 +22,11 @@ module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
   if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ status: 'error' });
+  if (req.method !== 'POST') return res.status(405).json({ status: 'error', message: 'Method not allowed' });
 
   const authHeader = req.headers['authorization'];
   if (!authHeader || authHeader !== `Bearer ${SECRET_AUTH_TOKEN}`) {
-    return res.status(401).json({ status: 'error', message: 'Trai phep' });
+    return res.status(401).json({ status: 'error', message: 'Unauthorized' });
   }
 
   const { action, hwid, key } = req.body;
@@ -35,9 +37,9 @@ module.exports = async (req, res) => {
     const tempCollection = db.collection('temp_keys');
     const mainCollection = db.collection('main_keys');
 
-    // [HANH DONG 1]: GET KEY
+    // [ACTION 1]: TẠO KEY TẠM & RÚT GỌN QUA LAYMA.NET
     if (action === 'generate') {
-      if (!hwid) return res.status(400).json({ status: 'error' });
+      if (!hwid) return res.status(400).json({ status: 'error', message: 'Missing HWID' });
       
       let newKey;
       let isDuplicate = true;
@@ -48,26 +50,31 @@ module.exports = async (req, res) => {
         if (!checkTemp && !checkMain) isDuplicate = false;
       }
       
-      await tempCollection.updateOne({ hwid: hwid }, { $set: { key: newKey, createdAt: new Date() } }, { upsert: true });
+      await tempCollection.updateOne(
+        { hwid: hwid }, 
+        { $set: { key: newKey, createdAt: new Date() } }, 
+        { upsert: true }
+      );
       
-      const formattedAuthTool = `https://authtool.app{newKey}`;
+      const formattedAuthTool = `https://authtool.app/get-key/?result=${newKey}`;
       const encodedUrl = encodeURIComponent(formattedAuthTool);
-      const laymaApiUrl = `https://layma.net{encodedUrl}&link_du_phong=${encodedUrl}`;
+      const laymaApiUrl = `https://api.layma.net/api/admin/shortlink/quicklink?tokenUser=${LAYMA_API_TOKEN}&format=json&url=${encodedUrl}&link_du_phong=${encodedUrl}`;
       
       try {
-        const fetch = require('node-fetch'); 
         const laymaRes = await fetch(laymaApiUrl).then(r => r.json());
-        if (laymaRes && laymaRes.html) {
-          return res.status(200).json({ status: 'success', shortLink: laymaRes.html });
+        if (laymaRes && (laymaRes.html || laymaRes.shorturl)) {
+          return res.status(200).json({ status: 'success', shortLink: laymaRes.html || laymaRes.shorturl });
         }
       } catch (err) {
-        return res.status(200).json({ status: 'success', shortLink: formattedAuthTool });
+        // Fallback về link gốc nếu lỗi mạng hoặc API layma gặp sự cố
       }
+      
+      return res.status(200).json({ status: 'success', shortLink: formattedAuthTool });
     }
 
-    // [HANH DONG 2]: SUBMIT
+    // [ACTION 2]: XÁC THỰC KEY (SUBMIT) & CẤP THỜI GIAN 24H
     if (action === 'submit') {
-      if (!hwid || !key || key.length < 10 || !key.startsWith("DUBO-KEY=")) {
+      if (!hwid || !key || !key.startsWith("DUBO-KEY=")) {
         return res.status(403).json({ status: 'failed', message: 'Dinh dang key sai!' });
       }
       
@@ -76,17 +83,24 @@ module.exports = async (req, res) => {
       if (tempRecord) {
         await tempCollection.deleteOne({ _id: tempRecord._id });
         
-        const expireAt = new Date();
-        expireAt.setHours(expireAt.getHours() + 24); 
-        await mainCollection.updateOne({ hwid: hwid }, { $set: { key: key, expireAt: expireAt, createdAt: new Date() } }, { upsert: true });
+        const expireTimestamp = Math.floor(Date.now() / 1000) + (24 * 60 * 60); 
+        
+        await mainCollection.updateOne(
+          { hwid: hwid }, 
+          { $set: { key: key, expireAt: new Date(expireTimestamp * 1000), createdAt: new Date() } }, 
+          { upsert: true }
+        );
 
-        return res.status(200).json({ status: 'success', serverTime: Math.floor(Date.now() / 1000) });
+        return res.status(200).json({ 
+          status: 'success', 
+          expireTimestamp: expireTimestamp 
+        });
       } else {
-        return res.status(403).json({ status: 'failed', message: 'Key khong khop kho tam!' });
+        return res.status(403).json({ status: 'failed', message: 'Key khong khop hoac da het han!' });
       }
     }
 
-    return res.status(400).json({ status: 'error' });
+    return res.status(400).json({ status: 'error', message: 'Invalid action' });
   } catch (error) {
     return res.status(500).json({ status: 'error', details: error.message });
   }
