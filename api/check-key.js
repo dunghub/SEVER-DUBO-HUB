@@ -35,9 +35,10 @@ module.exports = async (req, res) => {
     const tempCollection = db.collection('temp_keys');
     const mainCollection = db.collection('main_keys');
 
-    // [HANH DONG 1]: GET KEY
+    // [HÀNH ĐỘNG 1]: CLICK GET KEY -> TẠO KEY CẤT TẠM & NỐI CHUỖI LINK LAYMA.NET TRÊN SERVER
     if (action === 'generate') {
       if (!hwid) return res.status(400).json({ status: 'error' });
+      
       let newKey;
       let isDuplicate = true;
       while (isDuplicate) {
@@ -46,25 +47,43 @@ module.exports = async (req, res) => {
         const checkMain = await mainCollection.findOne({ key: newKey });
         if (!checkTemp && !checkMain) isDuplicate = false;
       }
+      
       await tempCollection.updateOne({ hwid: hwid }, { $set: { key: newKey, createdAt: new Date() } }, { upsert: true });
-      return res.status(200).json({ status: 'success', key: newKey });
+      
+      const formattedAuthTool = `https://authtool.app{newKey}`;
+      const encodedUrl = encodeURIComponent(formattedAuthTool);
+      const laymaApiUrl = `https://layma.net{encodedUrl}&link_du_phong=${encodedUrl}`;
+      
+      try {
+        const fetch = require('node-fetch'); 
+        const laymaRes = await fetch(laymaApiUrl).then(r => r.json());
+        if (laymaRes && laymaRes.html) {
+          return res.status(200).json({ status: 'success', shortLink: laymaRes.html });
+        }
+      } catch (err) {
+        return res.status(200).json({ status: 'success', shortLink: formattedAuthTool });
+      }
     }
 
-    // [HANH DONG 2]: SUBMIT -> CHI TRA VE GIO CHUAN CUA DAM MAY
+    // [HÀNH ĐỘNG 2]: ẤN SUBMIT -> SO SÁNH KHỚP THÌ CHO QUA VÀ TRẢ VỀ GIỜ ĐÁM MÂY CHUẨN
     if (action === 'submit') {
-      if (!hwid || !key) return res.status(400).json({ status: 'error' });
-      const tempRecord = await tempCollection.findOne({ hwid: hwid, key: key });
-      if (!tempRecord) return res.status(403).json({ status: 'failed' });
-
-      await tempCollection.deleteOne({ _id: tempRecord._id });
+      if (!hwid || !key || key.length < 10 || !key.startsWith("DUBO-KEY=")) {
+        return res.status(403).json({ status: 'failed', message: 'Dinh dang key sai!' });
+      }
       
-      const expireAt = new Date();
-      expireAt.setHours(expireAt.getHours() + 24); 
+      const tempRecord = await tempCollection.findOne({ hwid: hwid, key: key });
+      
+      if (tempRecord) {
+        await tempCollection.deleteOne({ _id: tempRecord._id });
+        
+        const expireAt = new Date();
+        expireAt.setHours(expireAt.getHours() + 24); 
+        await mainCollection.updateOne({ hwid: hwid }, { $set: { key: key, expireAt: expireAt, createdAt: new Date() } }, { upsert: true });
 
-      await mainCollection.updateOne({ hwid: hwid }, { $set: { key: key, expireAt: expireAt, createdAt: new Date() } }, { upsert: true });
-
-      // Tra ve thoi gian hien tai cua internet dam may de script tu tinh toan
-      return res.status(200).json({ status: 'success', serverTime = Math.floor(Date.now() / 1000) });
+        return res.status(200).json({ status: 'success', serverTime: Math.floor(Date.now() / 1000) });
+      } else {
+        return res.status(403).json({ status: 'failed', message: 'Key khong khop kho tam!' });
+      }
     }
 
     return res.status(400).json({ status: 'error' });
