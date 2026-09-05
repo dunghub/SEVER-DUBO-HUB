@@ -35,7 +35,7 @@ module.exports = async (req, res) => {
     const tempCollection = db.collection('temp_keys');
     const mainCollection = db.collection('main_keys');
 
-    // [HÀNH ĐỘNG 1]: CLICK GET KEY -> TẠO KEY CẤT TẠM & NỐI CHUỖI LINK LAYMA.NET TRÊN SERVER
+    // [HANH DONG 1]: GET KEY
     if (action === 'generate') {
       if (!hwid) return res.status(400).json({ status: 'error' });
       
@@ -65,7 +65,7 @@ module.exports = async (req, res) => {
       }
     }
 
-    // [HÀNH ĐỘNG 2]: ẤN SUBMIT -> SO SÁNH KHỚP THÌ CHO QUA VÀ TRẢ VỀ GIỜ ĐÁM MÂY CHUẨN
+    // [HANH DONG 2]: SUBMIT
     if (action === 'submit') {
       if (!hwid || !key || key.length < 10 || !key.startsWith("DUBO-KEY=")) {
         return res.status(403).json({ status: 'failed', message: 'Dinh dang key sai!' });
