@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const fetch = require('node-fetch');
 
 const uri = process.env.MONGODB_URI;
-const SECRET_AUTH_TOKEN = process.env.SECRET_AUTH_TOKEN; 
+const SECRET_AUTH_TOKEN = 'DUBO-KEY-04/01/2012'; 
 const LAYMA_API_TOKEN = process.env.LAYMA_API_TOKEN;
 let cachedClient = null;
 
