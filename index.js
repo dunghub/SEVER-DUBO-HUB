@@ -13,42 +13,48 @@ client.once('ready', () => {
   console.log(`Bot đã online thành công với tên: ${client.user.tag}`);
 });
 
-// Xử lý khi có tin nhắn gửi vào Discord
+// Xử lý tin nhắn gửi vào Discord
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
 
   // Lệnh kiểm tra bot: !ping
   if (message.content === '!ping') {
-    return message.reply('Pong! Bot Bypass đang hoạt động bình thường.');
+    return message.reply('Pong! Bot Bypass Layma.net đang hoạt động bình thường.');
   }
 
-  // Lệnh Bypass LinkTop: !bypass <link>
+  // Lệnh Bypass Layma.net: !bypass <link>
   if (message.content.startsWith('!bypass')) {
     const args = message.content.split(' ');
     const url = args[1];
 
     if (!url) {
-      return message.reply('Vui lòng nhập link LinkTop cần bypass! Ví dụ: `!bypass https://linktop.one/xyz`');
+      return message.reply('Vui lòng nhập link layma.net cần bypass! Ví dụ: `!bypass https://layma.net/example`');
     }
 
-    if (!url.includes('linktop.one')) {
-      return message.reply('Link không hợp lệ! Vui lòng nhập link của LinkTop.');
+    if (!url.includes('layma.net')) {
+      return message.reply('Link không hợp lệ! Vui lòng nhập đúng link của `layma.net`.');
     }
 
-    const waitingMsg = await message.reply('⏳ Đang tiến hành Bypass LinkTop, vui lòng chờ...');
+    const waitingMsg = await message.reply('⏳ Đang tiến hành lấy mã từ `layma.net`, vui lòng chờ giây lát...');
 
     try {
-      // Gọi script bypass của Verrni Team
-      const response = await fetch(`https://cdn.verrni.fun/raw/Bypass/LinkTop/LinkTopBP.js`);
-      
-      // Thông báo kết quả
-      await waitingMsg.edit(`✅ **Bypass thành công!**\nLink gốc của bạn: ${url}`);
+      // Gọi API bypass công khai của Layma.net
+      const apiUrl = `https://layma.net/api?url=${encodeURIComponent(url)}`;
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+
+      if (data && (data.code || data.key || data.result)) {
+        const resultCode = data.code || data.key || data.result;
+        await waitingMsg.edit(`✅ **Bypass thành công!**\n🔑 **Mã của bạn:** \`${resultCode}\``);
+      } else {
+        await waitingMsg.edit('❌ **Bypass thất bại!** Không tìm thấy mã hoặc link đã hết hạn.');
+      }
     } catch (error) {
       console.error(error);
-      await waitingMsg.edit('❌ **Bypass thất bại!** Có lỗi xảy ra hoặc link bị hỏng.');
+      await waitingMsg.edit('❌ **Bypass thất bại!** Có lỗi xảy ra khi kết nối tới máy chủ layma.net.');
     }
   }
 });
 
-// Thay TOKEN_BOT_CUA_BAN bằng Token bot lấy từ Discord Developer Portal
+// Lấy Token bảo mật từ Environment Variables trên Render
 client.login(process.env.DISCORD_TOKEN);
