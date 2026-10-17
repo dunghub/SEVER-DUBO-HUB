@@ -51,4 +51,4 @@ client.on('messageCreate', async (message) => {
 });
 
 // Thay TOKEN_BOT_CUA_BAN bằng Token bot lấy từ Discord Developer Portal
-client.login('MTUxNjQ2NDY1MDA3NjY4ODQ0NA.GaNkUa.77SW3CP1L9kzQRJbSHM_NEE_G2QFamYFEBN9Og');
+client.login('MTUxNjQ2NDY1MDA3NjY4ODQ0NA.GsnxTY.j4tSWgu3__Z4Ru_zii-6erJ5MlyYuyxZgH4Oic');
