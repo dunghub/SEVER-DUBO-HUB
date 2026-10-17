@@ -29,7 +29,7 @@ client.on('messageCreate', async (message) => {
 
     try {
       // Khởi tạo Agent chạy qua Proxy SOCKS5 miễn phí
-      const proxyUrl = 'socks5://157.66.26.151:1080';
+      const proxyUrl = 'socks5://192.168.1.27';
       const agent = new SocksProxyAgent(proxyUrl);
 
       // Gọi fetch kèm agent proxy
