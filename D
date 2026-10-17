@@ -1,7 +1,0 @@
-repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer
-DuboCFG = {
-    WebhookURL = "https://discord.com/api/webhooks/1543257753747988560/BWOVuk9eVhqLBdE9B9oM45eG7xrUIR7XlZg0WJloJVVXg7nD_0RxaiR78CA12hkNupsF",
-    Team = "Pirates",
-    Move = "Teleport"
-}
-loadstring(game:HttpGet("https://raw.githubusercontent.com/dunghub/SEVER-DUBO-HUB/refs/heads/main/Fruit"))()
