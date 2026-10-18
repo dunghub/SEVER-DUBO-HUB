@@ -1,5 +1,5 @@
-const { Client, GatewayIntentBits } = require('discord.js');
-const { SocksProxyAgent } = require('socks-proxy-agent'); // Thư viện kéo proxy SOCKS5
+const { Client, GatewayIntentBits, AttachmentBuilder } = require('discord.js');
+const { SocksProxyAgent } = require('socks-proxy-agent');
 
 const client = new Client({
   intents: [
@@ -10,57 +10,87 @@ const client = new Client({
   ]
 });
 
+// THAY LINK NGROK TỪ MÁY NHÀ VÀO ĐÂY (Ví dụ: https://xxxx.ngrok-free.app)
+const LOCAL_WORKER_URL = 'https://THAY_LINK_NGROK_CỦA_BẠN';
+
+// NẾU MUỐN THỬ PROXY TRÊN RENDER THÌ SỬA IP TẠI ĐÂY
+const PROXY_IP = 'socks5://210.211.113.33:1080';
+
 client.once('ready', () => {
-  console.log(`Bot đã online: ${client.user.tag}`);
+  console.log(`[Bot Online] Đã đăng nhập thành công: ${client.user.tag}`);
 });
 
 client.on('messageCreate', async (message) => {
   if (message.author.bot) return;
 
+  // LỆNH 1: !screenshot <link> -> Gửi yêu cầu về máy nhà mở trình duyệt chụp ảnh trang web
+  if (message.content.startsWith('!screenshot')) {
+    const args = message.content.split(' ');
+    const url = args[1];
+
+    if (!url) {
+      return message.reply('❌ Vui lòng nhập link! Cú pháp: `!screenshot <link_layma>`');
+    }
+
+    const waitingMsg = await message.reply('📸 Đang gửi yêu cầu về Local Worker (mạng nhà) mở trình duyệt chụp ảnh...');
+
+    try {
+      const response = await fetch(`${LOCAL_WORKER_URL}/screenshot-local`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        const base64Data = data.image.replace(/^data:image\/png;base64,/, "");
+        const buffer = Buffer.from(base64Data, 'base64');
+        const attachment = new AttachmentBuilder(buffer, { name: 'screenshot.png' });
+
+        await message.channel.send({
+          content: `✅ **Hình ảnh thực tế giao diện trang web tại máy nhà:**`,
+          files: [attachment]
+        });
+        await waitingMsg.delete().catch(() => {});
+      } else {
+        await waitingMsg.edit(`❌ **Chụp ảnh thất bại:** ${data.message}`);
+      }
+    } catch (error) {
+      console.error(error);
+      await waitingMsg.edit('❌ **Lỗi:** Không thể kết nối tới máy nhà! Vui lòng kiểm tra lại ngrok và `server.js`.');
+    }
+  }
+
+  // LỆNH 2: !bypass <link> -> Tự động chạy F12/Userscript và lấy mã code
   if (message.content.startsWith('!bypass')) {
     const args = message.content.split(' ');
     const url = args[1];
 
     if (!url || !url.includes('layma.net')) {
-      return message.reply('Vui lòng nhập đúng link layma.net! Ví dụ: `!bypass https://layma.net/xxx`');
+      return message.reply('❌ Vui lòng nhập đúng link layma.net! Ví dụ: `!bypass https://layma.net/xxx`');
     }
 
-    const waitingMsg = await message.reply('⏳ Đang thử nghiệm kết nối qua Proxy VN (`157.66.26.151`)...');
+    const waitingMsg = await message.reply('⏳ Đang xử lý tự động bypass qua Local Worker...');
 
     try {
-      // Khởi tạo Agent chạy qua Proxy SOCKS5 miễn phí
-      const proxyUrl = 'socks5://192.168.1.27';
-      const agent = new SocksProxyAgent(proxyUrl);
-
-      // Gọi fetch kèm agent proxy
-      const response = await fetch(url, {
-        method: 'GET',
-        agent: agent, // Ép request đi qua proxy
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36'
-        },
-        signal: AbortSignal.timeout(10000) // Timeout sau 10 giây nếu proxy ngỏm
+      // Đẩy việc xử lý F12 / Userscript về máy nhà (Dùng Puppeteer + IP mạng nhà)
+      const response = await fetch(`${LOCAL_WORKER_URL}/bypass-local`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url })
       });
 
-      const htmlText = await response.text();
+      const data = await response.json();
 
-      // Kiểm tra xem có bị Cloudflare chặn (403, Cloudflare Challenge) hay không
-      if (htmlText.includes('cf-mitigation') || htmlText.includes('Attention Required!') || response.status === 403) {
-        return await waitingMsg.edit('❌ **Thất bại:** Proxy này đã bị Cloudflare tóm cổ hoặc ngỏm từ trước!');
-      }
-
-      // Quét tìm mã code sơ bộ trong HTML trả về
-      const codeMatch = htmlText.match(/(?:code|pass|key|mã)[:=]\s*["']?([a-zA-Z0-9_-]{4,20})["']?/i);
-
-      if (codeMatch && codeMatch[1]) {
-        await waitingMsg.edit(`✅ **Bypass thành công qua Proxy!**\n🔑 **Mã:** \`${codeMatch[1]}\``);
+      if (data.success) {
+        await waitingMsg.edit(`✅ **Bypass thành công!**\n🔑 **Mã thu được:** \`${data.code}\``);
       } else {
-        await waitingMsg.edit(`⚠️ Proxy sống và kết nối được tới trang, nhưng trang yêu cầu chạy script/nhiệm vụ (cần F12). Phản hồi HTTP: ${response.status}`);
+        await waitingMsg.edit(`❌ **Bypass thất bại:** ${data.message}`);
       }
-
     } catch (error) {
       console.error(error);
-      await waitingMsg.edit(`❌ **Proxy tèo:** Không thể kết nối tới proxy \`157.66.26.151:1080\` (Có thể proxy đã chết hoặc quá tải).`);
+      await waitingMsg.edit('❌ **Lỗi:** Không kết nối được với Local Worker máy nhà!');
     }
   }
 });
